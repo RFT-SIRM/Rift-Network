@@ -33,9 +33,9 @@ pub mod ultra_core_rift {
     }
 
     /// Gate-only: set or update the weight of a directed edge between two participants.
-    pub fn set_edge(ctx: Context<SetEdge>, from: Pubkey, to: Pubkey, weight: i128) -> Result<()> {
+    pub fn set_edge(ctx: Context<SetEdge>, _from: Pubkey, _to: Pubkey, weight: i128) -> Result<()> {
         require!(
-            weight >= -MAX_EDGE_COST && weight <= MAX_EDGE_COST,
+            (-MAX_EDGE_COST..=MAX_EDGE_COST).contains(&weight),
             RiftError::EdgeLimitExceeded
         );
         ctx.accounts.edge_account.weight = weight;
