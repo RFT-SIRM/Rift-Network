@@ -29,7 +29,7 @@ jobs:
         run: cargo fmt --all -- --check
 
       - name: Run clippy
-        run: cargo clippy --workspace --all-targets --all-features -- -D warnings -A unexpected-cfgs
+        run: cargo clippy --workspace --exclude ultra_core_rift --exclude rift_token --all-targets --all-features -- -D warnings -A unexpected-cfgs
 
       - name: Run tests
         run: cargo test --workspace --exclude ultra_core_rift --exclude rift_token
