@@ -2,17 +2,18 @@ SPDX-License-Identifier: BUSL-1.1
 
 Business Source License 1.1
 
-Copyright (c) 2026 The author of Rift-Network.
+Copyright (c) 2026 RFT-SIRM.
 
 This license governs use of the Rift-Network software (the “Work”). The Work is provided under the Business Source License 1.1 with the specific terms set forth below.
 
 1. Definitions.
-   a. “Licensor” means the author of Rift-Network.
+   a. “Licensor” means RFT-SIRM.
    b. “Project” means Rift-Network.
    c. “Work” means the source code, documentation, and other materials distributed under this License.
    d. “Change Date” means June 30, 2030.
    e. “Change License” means the Apache License, Version 2.0.
    f. “Production Use” means use of the Work in a public network, commercial product, token, derivative protocol, or any service or offering provided to third parties for value.
+   g. “Trademarks” means the name Rift-Network, the logo, branding, and any related service marks or trade dress.
 
 2. Grant of License.
    Subject to the terms of this License, Licensor grants you a worldwide, non-exclusive, royalty-free license to:
@@ -28,22 +29,26 @@ This license governs use of the Rift-Network software (the “Work”). The Work
    a. operate or support a public network;
    b. create or distribute a commercial product;
    c. issue, manage, or support a token or digital asset;
-   d. develop, deploy, or operate a derivative protocol based on the Work.
+   d. develop, deploy, or operate a derivative protocol based on the Work;
+   e. use the Work to provide services or offerings to third parties for value.
 
-5. Change Date.
+5. Trademarks.
+   The Work does not grant any right to use the trademarks of Licensor. The name Rift-Network, logo, branding, and associated marks are trademarks of Licensor. Use of these trademarks requires separate written permission from Licensor.
+
+6. Change Date.
    On or after the Change Date, Licensor may relicense the Work under the Change License.
 
-6. Change License.
+7. Change License.
    After the Change Date, the Work may be distributed under the Apache License, Version 2.0, or a later license chosen by Licensor.
 
-7. Termination.
+8. Termination.
    Your rights under this License terminate automatically if you fail to comply with any of its terms.
 
-8. Disclaimer of Warranty.
+9. Disclaimer of Warranty.
    The Work is provided “AS IS”, without warranty of any kind, express or implied, including but not limited to warranties of merchantability, fitness for a particular purpose, or non-infringement.
 
-9. Limitation of Liability.
+10. Limitation of Liability.
    In no event shall Licensor be liable for any indirect, incidental, special, consequential, or punitive damages arising out of your use of the Work.
 
-10. Reserved Rights.
+11. Reserved Rights.
    All rights not expressly granted in this License are reserved by Licensor.

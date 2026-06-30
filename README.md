@@ -286,4 +286,4 @@ The repository CI workflow is defined in `.github/workflows/rust.yml` and curren
 
 ## License
 
-This project is released under a Business Source License 1.1 (BSL 1.1). The source code is provided for study and audit, while commercial or production deployment is restricted by the terms in `LICENSE`. See `LICENSE` for full details.
+This project is licensed under Business Source License 1.1 (BSL 1.1). The source code is provided for study and audit, while commercial and production deployment are restricted by the terms in `LICENSE`. See `LICENSE` and `NOTICE` for full legal guidance.
