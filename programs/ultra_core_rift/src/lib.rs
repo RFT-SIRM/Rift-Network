@@ -259,6 +259,153 @@ impl CoreState {
         Ok(-limit)
     }
 
+    pub fn register_participant(&mut self) -> Result<()> {
+        require!(self.p < MAX_PARTICIPANTS, RiftError::MaxParticipantsReached);
+
+        self.total_base_sum = self
+            .total_base_sum
+            .checked_sub(self.global_field)
+            .ok_or(RiftError::MathOverflow)?;
+        self.p = self.p.checked_add(1).ok_or(RiftError::MathOverflow)?;
+        self.check_invariant()
+    }
+
+    pub fn unregister_participant(&mut self, base_balance: i128) -> Result<()> {
+        require!(base_balance >= 0, RiftError::DebtOnExitNotAllowed);
+
+        if base_balance > 0 {
+            let burn = base_balance as u128;
+            require!(self.total_supply >= burn, RiftError::SupplyUnderflow);
+
+            self.total_supply = self
+                .total_supply
+                .checked_sub(burn)
+                .ok_or(RiftError::MathOverflow)?;
+            self.total_burned = self
+                .total_burned
+                .checked_add(burn)
+                .ok_or(RiftError::MathOverflow)?;
+        }
+
+        self.total_base_sum = self
+            .total_base_sum
+            .checked_sub(base_balance)
+            .ok_or(RiftError::MathOverflow)?
+            .checked_add(self.global_field)
+            .ok_or(RiftError::MathOverflow)?;
+        self.p = self.p.checked_sub(1).ok_or(RiftError::MathOverflow)?;
+        self.check_invariant()
+    }
+
+    pub fn redistribute_amount(&mut self, amount: u128) -> Result<()> {
+        require!(self.p > 0, RiftError::ZeroParticipants);
+
+        let p_u128 = self.p as u128;
+        let total = amount
+            .checked_add(self.dust_accumulator)
+            .ok_or(RiftError::MathOverflow)?;
+
+        let q = total.checked_div(p_u128).ok_or(RiftError::MathOverflow)?;
+        let r = total.checked_rem(p_u128).ok_or(RiftError::MathOverflow)?;
+
+        let q_i128: i128 = q.try_into().map_err(|_| RiftError::MathOverflow)?;
+        self.global_field = self
+            .global_field
+            .checked_add(q_i128)
+            .ok_or(RiftError::MathOverflow)?;
+
+        let distributed = q.checked_mul(p_u128).ok_or(RiftError::MathOverflow)?;
+        self.total_supply = self
+            .total_supply
+            .checked_add(distributed)
+            .ok_or(RiftError::MathOverflow)?;
+        self.total_minted = self
+            .total_minted
+            .checked_add(distributed)
+            .ok_or(RiftError::MathOverflow)?;
+        self.dust_accumulator = r;
+
+        self.check_invariant()
+    }
+
+    pub fn apply_neg_entropy_tick(&mut self) -> Result<()> {
+        let p_i128 = self.p as i128;
+        require!(p_i128 <= NEG_E_MAX_P, RiftError::PhysicalOverflowLimit);
+
+        let delta = p_i128.checked_mul(NEG_E).ok_or(RiftError::MathOverflow)?;
+        self.global_field = self
+            .global_field
+            .checked_add(NEG_E)
+            .ok_or(RiftError::MathOverflow)?;
+        self.total_base_sum = self
+            .total_base_sum
+            .checked_sub(delta)
+            .ok_or(RiftError::MathOverflow)?;
+
+        self.check_invariant()
+    }
+
+    pub fn apply_transfer(
+        &mut self,
+        from_balance: i128,
+        to_balance: i128,
+        amount: u128,
+        edge_cost: i128,
+    ) -> Result<(i128, i128)> {
+        require!(!self.paused, RiftError::ProtocolPaused);
+        if amount == 0 {
+            return Ok((from_balance, to_balance));
+        }
+
+        let amt: i128 = amount.try_into().map_err(|_| RiftError::MathOverflow)?;
+        let new_from = from_balance
+            .checked_sub(amt)
+            .ok_or(RiftError::MathOverflow)?
+            .checked_sub(edge_cost)
+            .ok_or(RiftError::MathOverflow)?;
+
+        require!(new_from >= self.debt_limit()?, RiftError::DebtLimitExceeded);
+
+        let new_to = to_balance.checked_add(amt).ok_or(RiftError::MathOverflow)?;
+
+        if edge_cost != 0 {
+            self.total_base_sum = self
+                .total_base_sum
+                .checked_sub(edge_cost)
+                .ok_or(RiftError::MathOverflow)?;
+
+            match edge_cost.cmp(&0) {
+                std::cmp::Ordering::Greater => {
+                    let burn = edge_cost as u128;
+                    require!(self.total_supply >= burn, RiftError::SupplyUnderflow);
+                    self.total_supply = self
+                        .total_supply
+                        .checked_sub(burn)
+                        .ok_or(RiftError::MathOverflow)?;
+                    self.total_burned = self
+                        .total_burned
+                        .checked_add(burn)
+                        .ok_or(RiftError::MathOverflow)?;
+                }
+                std::cmp::Ordering::Less => {
+                    let mint = (-edge_cost) as u128;
+                    self.total_supply = self
+                        .total_supply
+                        .checked_add(mint)
+                        .ok_or(RiftError::MathOverflow)?;
+                    self.total_minted = self
+                        .total_minted
+                        .checked_add(mint)
+                        .ok_or(RiftError::MathOverflow)?;
+                }
+                _ => {}
+            }
+        }
+
+        self.check_invariant()?;
+        Ok((new_from, new_to))
+    }
+
     pub fn check_invariant(&self) -> Result<()> {
         require!(self.total_supply <= MAX_SUPPLY, RiftError::MathOverflow);
 
