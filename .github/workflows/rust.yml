@@ -32,4 +32,4 @@ jobs:
         run: cargo clippy --workspace --exclude ultra_core_rift --exclude rift_token --all-targets --all-features -- -D warnings -A unexpected-cfgs
 
       - name: Run tests
-        run: cargo test --workspace --exclude ultra_core_rift --exclude rift_token
+        run: cargo test --workspace --exclude rift_token
