@@ -535,7 +535,7 @@ pub struct TransferCtx<'info> {
     pub to_authority: UncheckedAccount<'info>,
 }
 
-impl<'info> TransferCtx<'info> {
+impl TransferCtx<'_> {
     pub fn perform_transfer(&mut self, amount: u128, edge_cost: i128) -> Result<()> {
         let state = &mut self.core_state;
         require!(!state.paused, RiftError::ProtocolPaused);
