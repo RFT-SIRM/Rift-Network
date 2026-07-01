@@ -1,0 +1,22 @@
+[package]
+name = "ultra_core_rift-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+arbitrary = "1.0"
+
+[dependencies.ultra_core_rift]
+path = "../programs/ultra_core_rift"
+
+[[bin]]
+name = "fuzz_target_1"
+path = "fuzz_targets/fuzz_target_1.rs"
+test = false
+doc = false
+bench = false
