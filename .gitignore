@@ -3,3 +3,6 @@
 
 # Anchor generated files
 **/target/
+
+# Property-based regression artifacts
+*.proptest-regressions

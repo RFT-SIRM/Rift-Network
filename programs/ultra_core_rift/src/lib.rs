@@ -1,3 +1,5 @@
+#![allow(unexpected_cfgs)]
+
 use anchor_lang::prelude::*;
 use rift_common::*;
 
@@ -229,6 +231,7 @@ pub mod ultra_core_rift {
 // ============================================================================
 
 #[account]
+#[derive(Debug)]
 pub struct CoreState {
     pub gate: Pubkey,           // 32
     pub paused: bool,           //  1
@@ -239,6 +242,12 @@ pub struct CoreState {
     pub total_burned: u128,     // 16
     pub p: u64,                 //  8
     pub dust_accumulator: u128, // 16
+}
+
+impl Default for CoreState {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl CoreState {
@@ -259,41 +268,79 @@ impl CoreState {
         Ok(-limit)
     }
 
+    pub fn new() -> Self {
+        Self {
+            gate: Pubkey::default(),
+            paused: false,
+            global_field: 0,
+            total_base_sum: 0,
+            total_supply: 0,
+            total_minted: 0,
+            total_burned: 0,
+            p: 0,
+            dust_accumulator: 0,
+        }
+    }
+
+    pub fn snapshot(&self) -> Self {
+        Self {
+            gate: self.gate,
+            paused: self.paused,
+            global_field: self.global_field,
+            total_base_sum: self.total_base_sum,
+            total_supply: self.total_supply,
+            total_minted: self.total_minted,
+            total_burned: self.total_burned,
+            p: self.p,
+            dust_accumulator: self.dust_accumulator,
+        }
+    }
+
     pub fn register_participant(&mut self) -> Result<()> {
         require!(self.p < MAX_PARTICIPANTS, RiftError::MaxParticipantsReached);
 
-        self.total_base_sum = self
+        let new_total_base_sum = self
             .total_base_sum
             .checked_sub(self.global_field)
             .ok_or(RiftError::MathOverflow)?;
-        self.p = self.p.checked_add(1).ok_or(RiftError::MathOverflow)?;
+        let new_p = self.p.checked_add(1).ok_or(RiftError::MathOverflow)?;
+
+        self.total_base_sum = new_total_base_sum;
+        self.p = new_p;
         self.check_invariant()
     }
 
     pub fn unregister_participant(&mut self, base_balance: i128) -> Result<()> {
         require!(base_balance >= 0, RiftError::DebtOnExitNotAllowed);
+        require!(self.p > 0, RiftError::ZeroParticipants);
+
+        let mut new_total_supply = self.total_supply;
+        let mut new_total_burned = self.total_burned;
 
         if base_balance > 0 {
             let burn = base_balance as u128;
-            require!(self.total_supply >= burn, RiftError::SupplyUnderflow);
+            require!(new_total_supply >= burn, RiftError::SupplyUnderflow);
 
-            self.total_supply = self
-                .total_supply
+            new_total_supply = new_total_supply
                 .checked_sub(burn)
                 .ok_or(RiftError::MathOverflow)?;
-            self.total_burned = self
-                .total_burned
+            new_total_burned = new_total_burned
                 .checked_add(burn)
                 .ok_or(RiftError::MathOverflow)?;
         }
 
-        self.total_base_sum = self
+        let new_total_base_sum = self
             .total_base_sum
             .checked_sub(base_balance)
             .ok_or(RiftError::MathOverflow)?
             .checked_add(self.global_field)
             .ok_or(RiftError::MathOverflow)?;
-        self.p = self.p.checked_sub(1).ok_or(RiftError::MathOverflow)?;
+        let new_p = self.p.checked_sub(1).ok_or(RiftError::MathOverflow)?;
+
+        self.total_supply = new_total_supply;
+        self.total_burned = new_total_burned;
+        self.total_base_sum = new_total_base_sum;
+        self.p = new_p;
         self.check_invariant()
     }
 
@@ -367,40 +414,44 @@ impl CoreState {
         require!(new_from >= self.debt_limit()?, RiftError::DebtLimitExceeded);
 
         let new_to = to_balance.checked_add(amt).ok_or(RiftError::MathOverflow)?;
+        let mut new_total_base_sum = self.total_base_sum;
+        let mut new_total_supply = self.total_supply;
+        let mut new_total_minted = self.total_minted;
+        let mut new_total_burned = self.total_burned;
 
         if edge_cost != 0 {
-            self.total_base_sum = self
-                .total_base_sum
+            new_total_base_sum = new_total_base_sum
                 .checked_sub(edge_cost)
                 .ok_or(RiftError::MathOverflow)?;
 
             match edge_cost.cmp(&0) {
                 std::cmp::Ordering::Greater => {
                     let burn = edge_cost as u128;
-                    require!(self.total_supply >= burn, RiftError::SupplyUnderflow);
-                    self.total_supply = self
-                        .total_supply
+                    require!(new_total_supply >= burn, RiftError::SupplyUnderflow);
+                    new_total_supply = new_total_supply
                         .checked_sub(burn)
                         .ok_or(RiftError::MathOverflow)?;
-                    self.total_burned = self
-                        .total_burned
+                    new_total_burned = new_total_burned
                         .checked_add(burn)
                         .ok_or(RiftError::MathOverflow)?;
                 }
                 std::cmp::Ordering::Less => {
                     let mint = (-edge_cost) as u128;
-                    self.total_supply = self
-                        .total_supply
+                    new_total_supply = new_total_supply
                         .checked_add(mint)
                         .ok_or(RiftError::MathOverflow)?;
-                    self.total_minted = self
-                        .total_minted
+                    new_total_minted = new_total_minted
                         .checked_add(mint)
                         .ok_or(RiftError::MathOverflow)?;
                 }
                 _ => {}
             }
         }
+
+        self.total_base_sum = new_total_base_sum;
+        self.total_supply = new_total_supply;
+        self.total_minted = new_total_minted;
+        self.total_burned = new_total_burned;
 
         self.check_invariant()?;
         Ok((new_from, new_to))

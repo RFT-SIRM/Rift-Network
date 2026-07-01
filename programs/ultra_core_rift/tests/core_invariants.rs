@@ -11,7 +11,7 @@ fn core_state_with(
     total_burned: u128,
     dust_accumulator: u128,
 ) -> CoreState {
-    let state = CoreState {
+    CoreState {
         gate: Pubkey::default(),
         paused: false,
         global_field,
@@ -21,8 +21,7 @@ fn core_state_with(
         total_burned,
         p,
         dust_accumulator,
-    };
-    state
+    }
 }
 
 #[test]

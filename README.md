@@ -1,6 +1,6 @@
 # Rift-Network
 
-![Rust](https://img.shields.io/badge/rust-1.85%2B-orange) ![Anchor](https://img.shields.io/badge/Anchor-0.30-blue) ![Solana](https://img.shields.io/badge/Solana-Program%20SDK-9945ff)
+![Rust](https://img.shields.io/badge/rust-1.85%2B-orange) ![Anchor](https://img.shields.io/badge/Anchor-0.30-blue) ![Solana](https://img.shields.io/badge/Solana-Program%20SDK-9945ff) ![CI](https://github.com/RFTSIRMSOLANA/RFTSIRMSOLANA/actions/workflows/rust.yml/badge.svg) ![License](https://img.shields.io/badge/license-MIT-green)
 
 Rift-Network is an experimental Solana protocol implemented with Anchor. It combines a core accounting layer with a separate token issuance layer to preserve a strict mathematical invariant while offering RIFT SPL token minting.
 
@@ -283,6 +283,10 @@ The repository CI workflow is defined in `.github/workflows/rust.yml` and curren
 - `cargo fmt --all -- --check`
 - `cargo clippy --workspace --exclude ultra_core_rift --exclude rift_token --all-targets --all-features -- -D warnings -A unexpected-cfgs`
 - `cargo test --workspace --exclude ultra_core_rift --exclude rift_token`
+
+## Security
+
+Please report security issues privately by emailing the maintainers or opening a private report through the repository security contact. Do not disclose vulnerabilities publicly until a fix is available.
 
 ## License
 

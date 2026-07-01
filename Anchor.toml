@@ -5,5 +5,5 @@ members = [
 ]
 
 [programs.local]
-ultra_core_rift = "/workspaces/RFTSIRMSOLANA/programs/ultra_core_rift/target/deploy/ultra_core_rift.so"
-rift_token = "/workspaces/RFTSIRMSOLANA/programs/rift_token/target/deploy/rift_token.so"
+ultra_core_rift = "target/deploy/ultra_core_rift.so"
+rift_token = "target/deploy/rift_token.so"
