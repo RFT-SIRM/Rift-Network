@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-anchor-lang = "0.30.0"
+anchor-lang = { version = "0.30.0", features = ["init-if-needed"] }
 anchor-spl = "0.30.0"
 rift-common = { path = "../../crates/rift-common" }
 ultra_core_rift = { path = "../../programs/ultra_core_rift" }
