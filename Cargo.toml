@@ -6,3 +6,6 @@ members = [
   "crates/rift-common",
   "fuzz",
 ]
+
+[profile.release]
+overflow-checks = true
