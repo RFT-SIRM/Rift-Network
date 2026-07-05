@@ -393,20 +393,9 @@ pub struct Rebase<'info> {
 
     pub authority: Signer<'info>,
 }
-
 // ============================================================================
 // EVENTS
 // ============================================================================
-
-#[event]
-pub struct IssueRiftEvent {
-    pub user:            Pubkey,
-    pub base_amount:     u64,
-    pub fee_amount:      u64,
-    pub shares_minted:   u64,
-    pub global_field:    i128,
-    pub rift_multiplier: u128,
-}
 
 #[event]
 pub struct IssueRiftEvent {
@@ -416,4 +405,11 @@ pub struct IssueRiftEvent {
     pub shares_minted: u64,
     pub global_field: i128,
     pub rift_multiplier: u128,
+}
+
+#[event]
+pub struct RiftRebaseEvent {
+    pub old_multiplier: u128,
+    pub new_multiplier: u128,
+    pub global_field: i128,
 }
