@@ -16,4 +16,7 @@ cluster = "devnet"
 wallet = "~/.config/solana/id.json"
 
 [workspace]
-membe
+members = [
+  "programs/ultra_core_rift",
+  "programs/rift_token",
+]
