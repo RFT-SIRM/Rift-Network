@@ -10,7 +10,7 @@ declare_id!("5yYh3k3nZs9q2xVhQ1uK7q9s7Jc8mG2hLs2sP3vR9b1A");
 // ============================================================================
 
 pub const FOUNDER_SHARE_BPS: u16 = 314; // 3.14% genesis allocation to admin vault
-pub const MAX_FEE_BPS: u16 = 10; // 0.10% maximum protocol fee
+pub const MAX_FEE_BPS: u16 = 10;        // 0.10% maximum protocol fee
 
 /// Floor for field_pressure in the mint-multiplier formula.
 /// Prevents the multiplier from diverging when global_field is near zero.
@@ -31,6 +31,11 @@ pub enum TokenError {
     InvalidCoreState,
     #[msg("Computed shares to mint is zero. Increase base_amount or wait for field pressure to decrease.")]
     ZeroSharesMinted,
+    /// [F-04] Returned when fee_bps > 0 but base_amount is so small that the
+    /// computed fee rounds down to zero. Accepting such calls would let users
+    /// bypass the protocol fee entirely on micro-amounts.
+    #[msg("Amount too small: fee rounds to zero. Increase base_amount.")]
+    AmountTooSmall,
 }
 
 // ============================================================================
@@ -53,17 +58,17 @@ pub mod rift_token {
         require!(fee_bps <= MAX_FEE_BPS, TokenError::FeeTooHigh);
 
         let state = &mut ctx.accounts.rift_token_state;
-        state.authority = ctx.accounts.gate.key();
-        state.core_state = ctx.accounts.core_state.key();
-        state.admin_vault = ctx.accounts.admin_vault.key();
-        state.decimals = decimals;
-        state.fee_bps = fee_bps;
-        state.total_shares = 0;
+        state.authority      = ctx.accounts.gate.key();
+        state.core_state     = ctx.accounts.core_state.key();
+        state.admin_vault    = ctx.accounts.admin_vault.key();
+        state.decimals       = decimals;
+        state.fee_bps        = fee_bps;
+        state.total_shares   = 0;
         state.rift_multiplier = 1_000_000_000_000_000u128;
-        state.bump = ctx.bumps.rift_token_state;
+        state.bump           = ctx.bumps.rift_token_state;
 
         // founder_share = initial_supply * FOUNDER_SHARE_BPS / 10_000
-        // intermediate is u128 to avoid overflow during multiplication;
+        // Intermediate is u128 to avoid overflow during multiplication;
         // result is <= initial_supply (u64), so the downcast is safe.
         let founder_share_u128 = (initial_supply as u128)
             .checked_mul(FOUNDER_SHARE_BPS as u128)
@@ -80,8 +85,8 @@ pub mod rift_token {
             let signer_seeds: &[&[&[u8]]] = &[&[b"rift_mint_authority", &[auth_bump]]];
 
             let cpi_accounts = token::MintTo {
-                mint: ctx.accounts.rift_mint.to_account_info(),
-                to: ctx.accounts.admin_vault_token_account.to_account_info(),
+                mint:      ctx.accounts.rift_mint.to_account_info(),
+                to:        ctx.accounts.admin_vault_token_account.to_account_info(),
                 authority: ctx.accounts.rift_authority.to_account_info(),
             };
             token::mint_to(
@@ -107,13 +112,14 @@ pub mod rift_token {
     /// Shares minted = (base_amount - fee) * (1e15 / field_pressure) / 1e12
     ///
     /// The mint multiplier is inversely proportional to field_pressure so that
-    /// higher global_field → cheaper shares. field_pressure is floored at
+    /// higher global_field → fewer shares. field_pressure is floored at
     /// MIN_FIELD_PRESSURE to cap the multiplier.
     ///
     /// Security:
     ///   - core_state address verified against stored value (anti-substitution).
     ///   - admin_vault address verified against stored value.
     ///   - Protocol paused state checked explicitly (check_invariant does not cover it).
+    ///   - [F-04] fee_amount > 0 enforced when fee_bps > 0 (anti-griefing).
     ///   - shares_to_mint > 0 enforced so users cannot pay a fee and receive nothing.
     ///   - All u128 → u64 downcasts are checked.
     pub fn issue_rift(ctx: Context<IssueRift>, base_amount: u64) -> Result<()> {
@@ -141,13 +147,27 @@ pub mod rift_token {
             .try_into()
             .map_err(|_| RiftError::MathOverflow)?;
 
+        // [F-04] FIX: Reject micro-amounts that would let a caller bypass the
+        // protocol fee due to integer truncation. When fee_bps = 0 the protocol
+        // intentionally operates fee-free, so the guard is skipped.
+        //
+        // Example of the griefing vector without this check:
+        //   fee_bps = 10 (MAX), base_amount = 999 lamport
+        //   fee = 999 * 10 / 10_000 = 0  (truncated)
+        //   → user receives tokens without paying any fee
+        if state.fee_bps > 0 {
+            require!(fee_amount > 0, TokenError::AmountTooSmall);
+        }
+
         let amount_after_fee = base_amount
             .checked_sub(fee_amount)
             .ok_or(RiftError::MathOverflow)?;
 
         // field_pressure = max(|global_field|, MIN_FIELD_PRESSURE)
         // unsigned_abs() on i128 gives u128; max() floors it at MIN_FIELD_PRESSURE.
-        let field_pressure = core.global_field.unsigned_abs().max(MIN_FIELD_PRESSURE);
+        let field_pressure = core.global_field
+            .unsigned_abs()
+            .max(MIN_FIELD_PRESSURE);
 
         // mint_multiplier = 1e15 / field_pressure
         // field_pressure >= MIN_FIELD_PRESSURE = 1e6, so mint_multiplier <= 1e9.
@@ -200,8 +220,8 @@ pub mod rift_token {
             CpiContext::new_with_signer(
                 ctx.accounts.token_program.to_account_info(),
                 token::MintTo {
-                    mint: ctx.accounts.rift_mint.to_account_info(),
-                    to: ctx.accounts.user_token_account.to_account_info(),
+                    mint:      ctx.accounts.rift_mint.to_account_info(),
+                    to:        ctx.accounts.user_token_account.to_account_info(),
                     authority: ctx.accounts.rift_authority.to_account_info(),
                 },
                 signer_seeds,
@@ -215,12 +235,15 @@ pub mod rift_token {
             .ok_or(RiftError::MathOverflow)?;
 
         emit!(IssueRiftEvent {
-            user: ctx.accounts.user.key(),
+            user:            ctx.accounts.user.key(),
             base_amount,
             fee_amount,
-            shares_minted: shares_to_mint,
-            global_field: core.global_field,
-            rift_multiplier: state.rift_multiplier,
+            shares_minted:   shares_to_mint,
+            global_field:    core.global_field,
+            // [F-05] Emit the actually-used mint_multiplier, not the stale
+            // cached state.rift_multiplier (which reflects the last rebase call
+            // and may lag the current global_field).
+            rift_multiplier: mint_multiplier,
         });
 
         Ok(())
@@ -228,16 +251,18 @@ pub mod rift_token {
 
     /// Gate-only: synchronise rift_multiplier with the current global_field.
     ///
-    /// rift_multiplier is a cached view of the mint rate; calling rebase after
-    /// a significant field change keeps it accurate for off-chain consumers.
-    /// It does not affect the Core invariant.
+    /// rift_multiplier is a cached view of the mint rate for off-chain consumers.
+    /// On-chain minting always recomputes from global_field directly.
+    /// Intentionally does not check core.paused: gate operations are exempt.
     pub fn rebase(ctx: Context<Rebase>) -> Result<()> {
-        let core = &ctx.accounts.core_state;
+        let core  = &ctx.accounts.core_state;
         let state = &mut ctx.accounts.rift_token_state;
 
         core.check_invariant()?;
 
-        let field_pressure = core.global_field.unsigned_abs().max(MIN_FIELD_PRESSURE);
+        let field_pressure = core.global_field
+            .unsigned_abs()
+            .max(MIN_FIELD_PRESSURE);
 
         let new_multiplier = 1_000_000_000_000_000u128
             .checked_div(field_pressure)
@@ -262,14 +287,14 @@ pub mod rift_token {
 
 #[account]
 pub struct RiftTokenState {
-    pub authority: Pubkey,     // 32 — gate that controls rebase
-    pub core_state: Pubkey,    // 32 — address of the bound CoreState
-    pub admin_vault: Pubkey,   // 32 — receives genesis share and SOL fees
-    pub decimals: u8,          //  1
-    pub fee_bps: u16,          //  2
-    pub total_shares: u64,     //  8
-    pub rift_multiplier: u128, // 16
-    pub bump: u8,              //  1
+    pub authority:      Pubkey,  // 32 — gate that controls rebase
+    pub core_state:     Pubkey,  // 32 — address of the bound CoreState
+    pub admin_vault:    Pubkey,  // 32 — receives genesis share and SOL fees
+    pub decimals:       u8,      //  1
+    pub fee_bps:        u16,     //  2
+    pub total_shares:   u64,     //  8
+    pub rift_multiplier: u128,   // 16
+    pub bump:           u8,      //  1
 }
 // On-chain size: 8 (discriminator) + 32*3 + 1 + 2 + 8 + 16 + 1 = 132 bytes
 
@@ -308,7 +333,7 @@ pub struct Initialize<'info> {
     #[account(mut)]
     pub gate: Signer<'info>,
 
-    pub token_program: Program<'info, Token>,
+    pub token_program:  Program<'info, Token>,
     pub system_program: Program<'info, System>,
 }
 
@@ -347,7 +372,7 @@ pub struct IssueRift<'info> {
     pub admin_vault: UncheckedAccount<'info>,
 
     pub system_program: Program<'info, System>,
-    pub token_program: Program<'info, Token>,
+    pub token_program:  Program<'info, Token>,
 }
 
 #[derive(Accounts)]
@@ -375,11 +400,11 @@ pub struct Rebase<'info> {
 
 #[event]
 pub struct IssueRiftEvent {
-    pub user: Pubkey,
-    pub base_amount: u64,
-    pub fee_amount: u64,
-    pub shares_minted: u64,
-    pub global_field: i128,
+    pub user:            Pubkey,
+    pub base_amount:     u64,
+    pub fee_amount:      u64,
+    pub shares_minted:   u64,
+    pub global_field:    i128,
     pub rift_multiplier: u128,
 }
 
@@ -387,5 +412,5 @@ pub struct IssueRiftEvent {
 pub struct RiftRebaseEvent {
     pub old_multiplier: u128,
     pub new_multiplier: u128,
-    pub global_field: i128,
+    pub global_field:   i128,
 }
