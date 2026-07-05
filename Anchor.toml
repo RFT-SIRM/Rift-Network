@@ -1,9 +1,19 @@
-[workspace]
-members = [
-  "programs/ultra_core_rift",
-  "programs/rift_token",
-]
+[toolchain]
 
-[programs.local]
-ultra_core_rift = "target/deploy/ultra_core_rift.so"
-rift_token = "target/deploy/rift_token.so"
+[features]
+seeds = false
+skip-lint = false
+
+[programs.localnet]
+ultra_core_rift = "Fg6PaFpoGXkYsidMpWxTWqkYqk5Nnq4P6A4jR4Jm5Y8A"
+rift_token = "5yYh3k3nZs9q2xVhQ1uK7q9s7Jc8mG2hLs2sP3vR9b1A"
+
+[registry]
+url = "https://api.apr.dev"
+
+[provider]
+cluster = "devnet"
+wallet = "~/.config/solana/id.json"
+
+[workspace]
+membe
