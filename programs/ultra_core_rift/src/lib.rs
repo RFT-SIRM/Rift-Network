@@ -74,13 +74,28 @@ pub mod ultra_core_rift {
 
     /// Gate-only: unregister a participant and burn any remaining positive balance.
     ///
+    /// [F-02] FIX: The exit guard now checks effective_balance (= base_balance +
+    /// global_field) rather than base_balance alone. When global_field is deeply
+    /// negative a participant with base_balance = 0 still holds a negative
+    /// effective balance; allowing them to exit would leave the debt in limbo and
+    /// corrupt the accounting once p decrements.
+    ///
+    /// The burn path is unchanged: only a positive base_balance corresponds to
+    /// actual minted supply held per-participant. The global_field component is a
+    /// shared scalar and is not individually tokenised; it must not be burned here.
+    ///
     /// Invariant sync: remove this participant's base_balance from total_base_sum,
     /// then re-add global_field to compensate for p decrementing by 1.
     pub fn unregister(ctx: Context<Unregister>) -> Result<()> {
         let state = &mut ctx.accounts.core_state;
         let base = ctx.accounts.user_account.base_balance;
 
-        require!(base >= 0, RiftError::DebtOnExitNotAllowed);
+        // [F-02] Guard on effective balance, not base_balance alone.
+        // effective_balance = base_balance + global_field.
+        let effective_balance = base
+            .checked_add(state.global_field)
+            .ok_or(RiftError::MathOverflow)?;
+        require!(effective_balance >= 0, RiftError::DebtOnExitNotAllowed);
 
         if base > 0 {
             // base > 0 and base is i128, so the cast to u128 is safe.
@@ -118,7 +133,21 @@ pub mod ultra_core_rift {
     }
 
     /// Transfer amount from signer's account to to_authority's account, no edge cost.
+    ///
+    /// [F-01] FIX: Added require_keys_eq! to verify that to_user.authority matches
+    /// to_authority. Previously this check was only performed in transfer_with_edge,
+    /// leaving the plain transfer path open to recipient substitution.
     pub fn transfer(ctx: Context<Transfer>, amount: u128) -> Result<()> {
+        // [F-01] Verify recipient account ownership before mutating any state.
+        // to_user is derived via PDA seeds from to_authority.key(), which only
+        // proves the PDA derivation is correct — it does NOT prove that the
+        // UserAccount stored at that PDA actually belongs to to_authority.
+        // This check closes that gap identically to transfer_with_edge.
+        require_keys_eq!(
+            ctx.accounts.transfer_ctx.to_user.authority,
+            ctx.accounts.transfer_ctx.to_authority.key(),
+            RiftError::UnauthorizedAuthority
+        );
         ctx.accounts.transfer_ctx.perform_transfer(amount, 0)
     }
 
@@ -153,10 +182,6 @@ pub mod ultra_core_rift {
         let q = total.checked_div(p_u128).ok_or(RiftError::MathOverflow)?;
         let r = total.checked_rem(p_u128).ok_or(RiftError::MathOverflow)?;
 
-        // q can be up to total (when p = 1), which is u128. global_field is i128,
-        // so we need a checked downcast. q > i128::MAX would mean the single
-        // redistribution tick exceeds the entire signed field range, which the
-        // caller controls and should never reach in practice.
         let q_i128: i128 = q.try_into().map_err(|_| RiftError::MathOverflow)?;
 
         state.global_field = state
@@ -164,8 +189,6 @@ pub mod ultra_core_rift {
             .checked_add(q_i128)
             .ok_or(RiftError::MathOverflow)?;
 
-        // distributed = q * p <= total <= u128::MAX; checked_mul is safe but
-        // kept for defensive clarity.
         let distributed = q.checked_mul(p_u128).ok_or(RiftError::MathOverflow)?;
 
         state.total_supply = state
@@ -198,22 +221,15 @@ pub mod ultra_core_rift {
 
         let p_i128 = state.p as i128;
 
-        // Guard before the multiply: if p exceeds NEG_E_MAX_P, p * NEG_E overflows.
-        // This check is compile-time free (NEG_E_MAX_P is a const).
         require!(p_i128 <= NEG_E_MAX_P, RiftError::PhysicalOverflowLimit);
 
-        // delta = p * NEG_E (negative). Used solely to adjust total_base_sum.
         let delta = p_i128.checked_mul(NEG_E).ok_or(RiftError::MathOverflow)?;
 
-        // global_field shifts by one NEG_E tick, independent of p.
         state.global_field = state
             .global_field
             .checked_add(NEG_E)
             .ok_or(RiftError::MathOverflow)?;
 
-        // field_contrib = global_field * p changes by NEG_E * p = delta (negative).
-        // To keep total_supply = total_base_sum + field_contrib unchanged,
-        // subtract delta. Since delta < 0, checked_sub(delta) effectively adds |delta|.
         state.total_base_sum = state
             .total_base_sum
             .checked_sub(delta)
@@ -310,8 +326,12 @@ impl CoreState {
         self.check_invariant()
     }
 
+    /// [F-02] FIX mirrored in the helper used by fuzz and unit tests.
     pub fn unregister_participant(&mut self, base_balance: i128) -> Result<()> {
-        require!(base_balance >= 0, RiftError::DebtOnExitNotAllowed);
+        let effective_balance = base_balance
+            .checked_add(self.global_field)
+            .ok_or(RiftError::MathOverflow)?;
+        require!(effective_balance >= 0, RiftError::DebtOnExitNotAllowed);
         require!(self.p > 0, RiftError::ZeroParticipants);
 
         let mut new_total_supply = self.total_supply;
@@ -530,8 +550,9 @@ pub struct TransferCtx<'info> {
     #[account(mut, seeds = [b"user", to_authority.key().as_ref()], bump)]
     pub to_user: Account<'info, UserAccount>,
     pub from_authority: Signer<'info>,
-    /// CHECK: Used only as the PDA seed for to_user. Ownership verified via
-    /// to_user.authority == to_authority in transfer_with_edge.
+    /// CHECK: Used only as the PDA seed for to_user. Ownership is verified
+    /// explicitly via require_keys_eq! at the call site of every instruction
+    /// that invokes perform_transfer (both transfer and transfer_with_edge).
     pub to_authority: UncheckedAccount<'info>,
 }
 
@@ -544,8 +565,6 @@ impl TransferCtx<'_> {
             return Ok(());
         }
 
-        // amount is u128; base_balance is i128. Values above i128::MAX would
-        // exceed MAX_SUPPLY and should never exist in a valid state.
         let amt: i128 = amount.try_into().map_err(|_| RiftError::MathOverflow)?;
 
         let new_from = self
@@ -569,7 +588,6 @@ impl TransferCtx<'_> {
             .ok_or(RiftError::MathOverflow)?;
 
         if edge_cost != 0 {
-            // total_base_sum must track the removal of edge_cost from circulation.
             state.total_base_sum = state
                 .total_base_sum
                 .checked_sub(edge_cost)
@@ -577,8 +595,6 @@ impl TransferCtx<'_> {
 
             match edge_cost.cmp(&0) {
                 std::cmp::Ordering::Greater => {
-                    // Positive edge cost: burned from supply.
-                    // edge_cost > 0 and edge_cost is i128, so cast to u128 is safe.
                     let burn = edge_cost as u128;
                     require!(state.total_supply >= burn, RiftError::SupplyUnderflow);
                     state.total_supply = state
@@ -595,9 +611,6 @@ impl TransferCtx<'_> {
                     });
                 }
                 std::cmp::Ordering::Less => {
-                    // Negative edge cost: minted into supply.
-                    // edge_cost < 0 and edge_cost >= -MAX_EDGE_COST > i128::MIN,
-                    // so negation and cast to u128 are both safe.
                     let mint = (-edge_cost) as u128;
                     state.total_supply = state
                         .total_supply
@@ -701,10 +714,14 @@ pub struct TransferWithEdge<'info> {
 #[derive(Accounts)]
 #[instruction(from: Pubkey, to: Pubkey)]
 pub struct SetEdge<'info> {
-    #[account(mut, has_one = gate @ RiftError::UnauthorizedGate)]
+    // core_state is not mutated here; has_one only needs a read to validate gate.
+    #[account(has_one = gate @ RiftError::UnauthorizedGate)]
     pub core_state: Account<'info, CoreState>,
+    // [F-03] FIX: init_if_needed allows the gate to update an existing edge weight
+    // without closing and recreating the account. Requires the "init-if-needed"
+    // feature in anchor-lang (add to Cargo.toml features list).
     #[account(
-        init,
+        init_if_needed,
         payer = gate,
         space = EdgeAccount::SPACE,
         seeds = [b"edge", from.as_ref(), to.as_ref()],
