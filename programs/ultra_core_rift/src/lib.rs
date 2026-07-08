@@ -99,6 +99,22 @@ pub mod ultra_core_rift {
                 user: ctx.accounts.user_account.authority,
                 amount: burn,
             });
+        } else if base < 0 {
+            let mint = base.unsigned_abs();
+
+            state.total_supply = state
+                .total_supply
+                .checked_add(mint)
+                .ok_or(RiftError::MathOverflow)?;
+            state.total_minted = state
+                .total_minted
+                .checked_add(mint)
+                .ok_or(RiftError::MathOverflow)?;
+
+            emit!(MintEvent {
+                user: ctx.accounts.user_account.authority,
+                amount: mint,
+            });
         }
 
         state.total_base_sum = state
@@ -322,6 +338,7 @@ impl CoreState {
 
         let mut new_total_supply = self.total_supply;
         let mut new_total_burned = self.total_burned;
+        let mut new_total_minted = self.total_minted;
 
         if base_balance > 0 {
             let burn = base_balance as u128;
@@ -332,6 +349,15 @@ impl CoreState {
                 .ok_or(RiftError::MathOverflow)?;
             new_total_burned = new_total_burned
                 .checked_add(burn)
+                .ok_or(RiftError::MathOverflow)?;
+        } else if base_balance < 0 {
+            let mint = base_balance.unsigned_abs();
+
+            new_total_supply = new_total_supply
+                .checked_add(mint)
+                .ok_or(RiftError::MathOverflow)?;
+            new_total_minted = new_total_minted
+                .checked_add(mint)
                 .ok_or(RiftError::MathOverflow)?;
         }
 
@@ -346,6 +372,7 @@ impl CoreState {
 
         self.total_supply = new_total_supply;
         self.total_burned = new_total_burned;
+        self.total_minted = new_total_minted;
         self.total_base_sum = new_total_base_sum;
         self.p = new_p;
 
