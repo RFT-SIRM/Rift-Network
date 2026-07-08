@@ -47,7 +47,10 @@ pub mod ultra_core_rift {
     /// Gate-only: register a new participant.
     pub fn register(ctx: Context<Register>, user: Pubkey) -> Result<()> {
         let state = &mut ctx.accounts.core_state;
-        require!(state.p < MAX_PARTICIPANTS, RiftError::MaxParticipantsReached);
+        require!(
+            state.p < MAX_PARTICIPANTS,
+            RiftError::MaxParticipantsReached
+        );
 
         let user_account = &mut ctx.accounts.user_account;
         user_account.authority = user;
