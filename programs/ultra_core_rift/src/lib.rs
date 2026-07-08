@@ -82,6 +82,7 @@ pub mod ultra_core_rift {
             .ok_or(RiftError::MathOverflow)?;
         require!(effective_balance >= 0, RiftError::DebtOnExitNotAllowed);
 
+        #[allow(clippy::comparison_chain)]
         if base > 0 {
             let burn = base as u128;
             require!(state.total_supply >= burn, RiftError::SupplyUnderflow);
@@ -340,6 +341,7 @@ impl CoreState {
         let mut new_total_burned = self.total_burned;
         let mut new_total_minted = self.total_minted;
 
+        #[allow(clippy::comparison_chain)]
         if base_balance > 0 {
             let burn = base_balance as u128;
             require!(new_total_supply >= burn, RiftError::SupplyUnderflow);
