@@ -26,10 +26,7 @@ fuzz_target!(|data: &[u8]| {
 
     // Fix total_base_sum to (supply - global_field * p) so invariant (1) holds:
     // total_supply = total_base_sum + global_field * p
-    let field_contrib = state
-        .global_field
-        .checked_mul(state.p as i128)
-        .unwrap_or(0);
+    let field_contrib = state.global_field.checked_mul(state.p as i128).unwrap_or(0);
     state.total_base_sum = (state.total_supply as i128).saturating_sub(field_contrib);
 
     // Verify starting state is valid before executing operations.
