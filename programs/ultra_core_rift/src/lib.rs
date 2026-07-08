@@ -483,7 +483,7 @@ impl CoreState {
                         .ok_or(RiftError::MathOverflow)?;
                 }
                 std::cmp::Ordering::Less => {
-                    let mint = (-edge_cost) as u128;
+                    let mint = edge_cost.unsigned_abs();
                     new_total_supply = new_total_supply
                         .checked_add(mint)
                         .ok_or(RiftError::MathOverflow)?;
@@ -638,7 +638,7 @@ impl TransferCtx<'_> {
                     });
                 }
                 std::cmp::Ordering::Less => {
-                    let mint = (-edge_cost) as u128;
+                    let mint = edge_cost.unsigned_abs();
                     state.total_supply = state
                         .total_supply
                         .checked_add(mint)
