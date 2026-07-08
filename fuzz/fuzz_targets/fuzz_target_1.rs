@@ -43,7 +43,7 @@ fuzz_target!(|data: &[u8]| {
                 let _ = state.register_participant();
             }
             1 => {
-                let base_balance = u.arbitrary::<i128>().unwrap_or(0).abs() % 50;
+                let base_balance = (u.arbitrary::<i128>().unwrap_or(0) % 100) - 50;
                 let _ = state.unregister_participant(base_balance);
             }
             2 => {
