@@ -7,12 +7,12 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  FUZZ_MAX_TOTAL_TIME: 21000
+  FUZZ_MAX_TOTAL_TIME: 18000
 
 jobs:
   fuzz:
     runs-on: ubuntu-latest
-    timeout-minutes: 365
+    timeout-minutes: 320
 
     steps:
       - name: Checkout repository
