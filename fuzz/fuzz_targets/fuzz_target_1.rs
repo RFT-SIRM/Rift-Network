@@ -2,20 +2,9 @@
 
 use arbitrary::Unstructured;
 use libfuzzer_sys::fuzz_target;
-use rift_common::NEG_E;
 use ultra_core_rift::CoreState;
 
-/// Optimized fuzz target for ultra_core_rift invariant testing.
-///
-/// This harness employs stratified generation to test specific protocol paths:
-/// - Mode 0: Small p, global_field near NEG_E (tests NEG_E overflow guard)
-/// - Mode 1: Large p, moderate field (tests debris accumulation)
-/// - Mode 2: Negative field (tests debt_limit and DebtOnExit path)
-/// - Mode 3: Zero participants (tests p=0 edge case)
-/// - Mode 4: Large supply (tests u128 overflow boundaries)
-///
-/// Each mode has a targeted operation sequence designed to exercise protocol
-/// logic specific to that scenario.
+const NEG_E: i128 = -2_718_281_828_459_045_235;
 
 fuzz_target!(|data: &[u8]| {
     if data.is_empty() {
