@@ -6,14 +6,14 @@ use rift_common::NEG_E;
 use ultra_core_rift::CoreState;
 
 /// Optimized fuzz target for ultra_core_rift invariant testing.
-/// 
+///
 /// This harness employs stratified generation to test specific protocol paths:
 /// - Mode 0: Small p, global_field near NEG_E (tests NEG_E overflow guard)
 /// - Mode 1: Large p, moderate field (tests debris accumulation)
 /// - Mode 2: Negative field (tests debt_limit and DebtOnExit path)
 /// - Mode 3: Zero participants (tests p=0 edge case)
 /// - Mode 4: Large supply (tests u128 overflow boundaries)
-/// 
+///
 /// Each mode has a targeted operation sequence designed to exercise protocol
 /// logic specific to that scenario.
 
@@ -33,8 +33,6 @@ fuzz_target!(|data: &[u8]| {
         // Mode 0: Small p, field close to NEG_E (tests apply_neg_entropy overflow guard)
         0 => {
             state.p = u.int_in_range::<u64>(0..=3).unwrap_or(1);
-            // Set global_field to a large negative value (safely below NEG_E)
-            // This tests the NEG_E_MAX_P guard: if p * NEG_E overflows, it should fail safely
             let neg_e_scaled = NEG_E / 2;
             state.global_field = if u.arbitrary::<bool>().unwrap_or(false) {
                 neg_e_scaled
@@ -54,8 +52,8 @@ fuzz_target!(|data: &[u8]| {
         // Mode 2: Negative global_field (tests debt_limit and DebtOnExit rejection path)
         2 => {
             state.p = u.int_in_range::<u64>(2..=15).unwrap_or(5);
-            // Force negative field to increase chance of debt scenarios
-            state.global_field = -((u.arbitrary::<i128>().unwrap_or(0).abs() % 5000) + 100);
+            state.global_field =
+                -((u.arbitrary::<i128>().unwrap_or(0).abs() % 5000) + 100);
             state.total_supply = u.int_in_range::<u128>(500..=4000).unwrap_or(2000);
         }
 
@@ -70,8 +68,7 @@ fuzz_target!(|data: &[u8]| {
         4 => {
             state.p = u.int_in_range::<u64>(1..=5).unwrap_or(2);
             let safe_max = u128::MAX / 4;
-            state.total_supply = safe_max
-                - u.int_in_range::<u128>(0..=1000).unwrap_or(100);
+            state.total_supply = safe_max - u.int_in_range::<u128>(0..=1000).unwrap_or(100);
             state.global_field = (u.arbitrary::<i128>().unwrap_or(0) % 100).clamp(-50, 50);
         }
 
@@ -100,7 +97,7 @@ fuzz_target!(|data: &[u8]| {
             // Mode 0 (NEG_E testing): heavily bias towards apply_neg_entropy
             0 => {
                 if step % 3 == 0 {
-                    4  // apply_neg_entropy
+                    4 // apply_neg_entropy
                 } else {
                     u.arbitrary::<u8>().unwrap_or(0) % 5
                 }
@@ -109,7 +106,7 @@ fuzz_target!(|data: &[u8]| {
             // Mode 2 (debt testing): bias towards unregister to trigger DebtOnExit
             2 => {
                 if step % 4 == 0 {
-                    1  // unregister
+                    1 // unregister
                 } else {
                     u.arbitrary::<u8>().unwrap_or(0) % 5
                 }
@@ -118,7 +115,7 @@ fuzz_target!(|data: &[u8]| {
             // Mode 3 (p=0): permit all ops but be careful about early exits
             3 => {
                 if state.p == 0 && step == 0 {
-                    0  // register to initialize p
+                    0 // register to initialize p
                 } else {
                     u.arbitrary::<u8>().unwrap_or(0) % 5
                 }
