@@ -52,8 +52,7 @@ fuzz_target!(|data: &[u8]| {
         // Mode 2: Negative global_field (tests debt_limit and DebtOnExit rejection path)
         2 => {
             state.p = u.int_in_range::<u64>(2..=15).unwrap_or(5);
-            state.global_field =
-                -((u.arbitrary::<i128>().unwrap_or(0).abs() % 5000) + 100);
+            state.global_field = -((u.arbitrary::<i128>().unwrap_or(0).abs() % 5000) + 100);
             state.total_supply = u.int_in_range::<u128>(500..=4000).unwrap_or(2000);
         }
 
