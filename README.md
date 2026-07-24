@@ -284,10 +284,22 @@ The repository CI workflow is defined in `.github/workflows/rust.yml` and curren
 - `cargo clippy --workspace --exclude ultra_core_rift --exclude rift_token --all-targets --all-features -- -D warnings -A unexpected-cfgs`
 - `cargo test --workspace --exclude ultra_core_rift --exclude rift_token`
 
-## Security
+## 📄 License
 
-Please report security issues privately by emailing the maintainers or opening a private report through the repository security contact. Do not disclose vulnerabilities publicly until a fix is available.
+Licensed under **Apache License 2.0** — see [LICENSE](LICENSE) for details.
 
-## License
+Key terms:
+- Attribution required
+- Patent protection included
+- Derivative works allowed with conditions
+- Commercial use allowed
 
-This project is licensed under Business Source License 1.1 (BSL 1.1). The source code is provided for study and audit, while commercial and production deployment are restricted by the terms in `LICENSE`. See `LICENSE` and `NOTICE` for full legal guidance.
+---
+
+<div align="center">
+
+**Built in Rust · Verified by Mathematics · Zero Compromises**
+
+*Reality Fractal Theory Core · © 2026 Eugeny (RFT-SIRM)*
+
+</div>
