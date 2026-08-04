@@ -1,8 +1,8 @@
 # Rift Network
 
-![Protocol](https://img.shields.io/badge/Protocol-Solana%20SPL-9945ff?style=for-the-badge)
-![Audit](https://img.shields.io/badge/Audit-14%20Findings%20Addressed-22c55e?style=for-the-badge)
-![License](https://img.shields.io/badge/License-Apache%202.0-eab308?style=for-the-badge)
+[![Protocol](https://img.shields.io/badge/Protocol-Solana%20SPL-9945ff?style=for-the-badge)](https://solana.com)
+[![Audit](https://img.shields.io/badge/Audit-14%20Findings%20Addressed-22c55e?style=for-the-badge)](#-security-model)
+[![License](https://img.shields.io/badge/License-Apache%202.0-eab308?style=for-the-badge)](LICENSE)
 
 **Solana On-Chain Protocol · SIRM Invariant Enforcement · SPL Token Layer**
 
@@ -10,20 +10,20 @@ _Part of the [UltraCore RFT](https://github.com/RFT-SIRM/UltraCore-RFT) executio
 
 * * *
 
-## 🧭 Start Here
+## 🎯 Start Here
 
 | Audience | Document | What You Will Learn |
 | --- | --- | --- |
 | 🎯 **First-time visitor** | This README | What Rift Network is and how it fits into UltraCore |
-| 🔬 **Protocol engineer** | [`SPEC.md`](SPEC.md) | Full engineering specification: invariants, accounts, instructions |
-| 🏗️ **Solana developer** | `programs/` | Anchor implementation of core + token programs |
-| 🔐 **Security researcher** | [Audit & Verification](#-verification) | 14 findings addressed, invariant enforcement model |
+| 🔬 **Protocol engineer** | [SPEC.md](SPEC.md) | Full engineering specification: invariants, accounts, instructions |
+| 🏗️ **Solana developer** | [programs/](programs/) | Anchor implementation of core + token programs |
+| 🛡️ **Security researcher** | [Audit & Verification](#-security-model) | 14 findings addressed, invariant enforcement model |
 
 > **One-sentence summary:** Rift Network is a Solana protocol that enforces deterministic economic invariants on-chain through a separated core/token architecture — the on-chain implementation of the UltraCore execution platform.
 
 * * *
 
-## ⚡ At a Glance
+## ✨ At a Glance
 
 ```mermaid
 flowchart TB
@@ -58,7 +58,7 @@ flowchart TB
 
 * * *
 
-## 🏛️ What Is Rift Network?
+## 🌐 What Is Rift Network?
 
 Rift Network is the **on-chain institutional layer** of the UltraCore RFT execution platform. It is not a standalone token project. It is a deterministic economic protocol deployed on Solana that enforces the same SIRM invariants as the standalone [Rift L1 Blockchain](https://github.com/RFT-SIRM/Rift-L1-Blockchain) — but adapted for the Solana Virtual Machine and SPL token standard.
 
@@ -118,7 +118,7 @@ This is not an optimization. It is a different mathematical model that makes lar
 
 * * *
 
-## 🔬 Architecture
+## ⚙️ Architecture
 
 ### Core Program (`ultra_core_rift`)
 
@@ -165,7 +165,7 @@ shares_to_mint = (base_amount − fee) × mint_multiplier / 1_000_000_000_000
 
 * * *
 
-## 🔐 Security Model
+## 🛡️ Security Model
 
 ### What Was Audited
 
@@ -198,7 +198,7 @@ This means even a fully compromised token program cannot violate the core invari
 
 * * *
 
-## 🧪 Verification
+## ✅ Verification
 
 | Layer | Method | Evidence |
 | --- | --- | --- |
@@ -234,12 +234,12 @@ cargo test --workspace --exclude ultra_core_rift --exclude rift_token
 
 ```bash
 cargo fmt --all
-cargo clippy --workspace --exclude ultra_core_rift --exclude rift_token   --all-targets --all-features -- -D warnings -A unexpected-cfgs
+cargo clippy --workspace --exclude ultra_core_rift --exclude rift_token --all-targets --all-features -- -D warnings -A unexpected-cfgs
 ```
 
 * * *
 
-## 🗺️ Ecosystem Context
+## 🔗 Ecosystem Context
 
 ```mermaid
 flowchart TB
@@ -271,9 +271,11 @@ flowchart TB
 
 * * *
 
-## 📄 License
+## 📋 License
 
-Licensed under **Apache License 2.0** — see LICENSE for details.
+[![License](https://img.shields.io/badge/License-Apache%202.0-eab308?style=for-the-badge)](LICENSE)
+
+Licensed under **[Apache License 2.0](LICENSE)** — see [LICENSE](LICENSE) for details.
 
 * * *
 
