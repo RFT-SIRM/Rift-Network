@@ -1,8 +1,13 @@
 # Rift Network
 
-[![Protocol](https://img.shields.io/badge/Protocol-Solana%20SPL-9945ff?style=for-the-badge)](https://solana.com)
-[![Audit](https://img.shields.io/badge/Audit-14%20Findings%20Addressed-22c55e?style=for-the-badge)](#-security-model)
+[![Solana](https://img.shields.io/badge/Chain-Solana-9945ff?style=for-the-badge)](https://solana.com)
+[![SPL](https://img.shields.io/badge/Protocol-SPL%20Token-3b82f6?style=for-the-badge)](https://spl.solana.com)
+[![Anchor](https://img.shields.io/badge/Framework-Anchor-0ea5e9?style=for-the-badge)](https://www.anchor-lang.com)
+[![Audit](https://img.shields.io/badge/Security-14%20Findings%20Addressed-22c55e?style=for-the-badge)](#-security-model)
+[![Fuzz](https://img.shields.io/badge/Fuzzing-2.5B%2B%20Runs-10b981?style=for-the-badge)](#-verification)
 [![License](https://img.shields.io/badge/License-Apache%202.0-eab308?style=for-the-badge)](LICENSE)
+
+**Solana On-Chain Protocol · SIRM Invariant Enforcement · SPL Token Layer**
 
 **Solana On-Chain Protocol · SIRM Invariant Enforcement · SPL Token Layer**
 
