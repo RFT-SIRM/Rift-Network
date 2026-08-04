@@ -2,18 +2,22 @@ name: Daily CI + Extended Test
 
 on:
   schedule:
-    - cron: '0 0 * * *'   # каждый день в 00:00 UTC
-  workflow_dispatch:        # ручной запуск
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
-      
+
       - name: Cache cargo
         uses: actions/cache@v4
         with:
@@ -22,15 +26,18 @@ jobs:
             ~/.cargo/git
             target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-      
+
       - name: Check formatting
         run: cargo fmt --all -- --check
-      
-      - name: Run clippy
-        run: cargo clippy --workspace --exclude ultra_core_rift --exclude rift_token --all-targets --all-features -- -D warnings -A unexpected-cfgs
-      
-      - name: Run workspace tests
-        run: cargo test --workspace --exclude ultra_core_rift
-      
-      - name: Run integration tests
-        run: cargo test --test integration_core_token -p rift_token
+
+      - name: Run clippy (non-Anchor crates)
+        run: cargo clippy -p rift-common -p rift-integration-tests --all-targets -- -D warnings -A unexpected-cfgs
+
+      - name: Run ultra_core_rift tests
+        run: cargo test -p ultra_core_rift
+
+      - name: Run rift-common tests
+        run: cargo test -p rift-common
+
+      - name: Run integration tests (Core ↔ Token)
+        run: cargo test -p rift-integration-tests

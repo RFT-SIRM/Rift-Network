@@ -1868,6 +1868,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "rift-integration-tests"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+ "ultra_core_rift",
+]
+
+[[package]]
 name = "rift_token"
 version = "0.1.0"
 dependencies = [
