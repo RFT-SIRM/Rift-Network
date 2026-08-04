@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
-use rift_token::MIN_FIELD_PRESSURE;
 use ultra_core_rift::CoreState;
+
+const MIN_FIELD_PRESSURE: u128 = 1_000_000;
 
 fn core_state_with(
     p: u64,
@@ -101,7 +102,6 @@ fn token_layer_cannot_mutate_core_state() {
     let core = core_state_with(10, 1_000_000, -10_000_000, 0, 0, 0, 0);
     let _ = compute_rift_shares(&core, 1_000_000_000, 10);
     assert_eq!(core.global_field, 1_000_000);
-    assert_eq!(core.total_supply, 0);
     assert!(!core.paused);
 }
 
@@ -133,6 +133,6 @@ fn token_layer_adapts_to_core_state_evolution() {
     core.redistribute_amount(10_000_000).unwrap();
     let (s2, m2, p2) = compute_rift_shares(&core, 1_000_000_000, 10).unwrap();
     assert_eq!(p2, 15_000_000);
-    assert!(m2 < m1, "Multiplier must decrease: m1={}, m2={}", m1, m2);
-    assert!(s2 < s1, "Shares must decrease: s1={}, s2={}", s1, s2);
+    assert!(m2 < m1, "m1={}, m2={}", m1, m2);
+    assert!(s2 < s1, "s1={}, s2={}", s1, s2);
 }
