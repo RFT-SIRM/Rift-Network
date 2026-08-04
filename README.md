@@ -7,7 +7,6 @@
 [![Fuzz](https://img.shields.io/badge/Fuzzing-2.5B%2B%20Runs-10b981?style=for-the-badge)](#-verification)
 [![License](https://img.shields.io/badge/License-Apache%202.0-eab308?style=for-the-badge)](LICENSE)
 
-**Solana On-Chain Protocol · SIRM Invariant Enforcement · SPL Token Layer**
 
 **Solana On-Chain Protocol · SIRM Invariant Enforcement · SPL Token Layer**
 
