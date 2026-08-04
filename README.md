@@ -1,5 +1,9 @@
 # Rift Network
 
+![Protocol](https://img.shields.io/badge/Protocol-Solana%20SPL-9945ff?style=for-the-badge)
+![Audit](https://img.shields.io/badge/Audit-14%20Findings%20Addressed-22c55e?style=for-the-badge)
+![License](https://img.shields.io/badge/License-Apache%202.0-eab308?style=for-the-badge)
+
 **Solana On-Chain Protocol · SIRM Invariant Enforcement · SPL Token Layer**
 
 _Part of the [UltraCore RFT](https://github.com/RFT-SIRM/UltraCore-RFT) execution platform_
