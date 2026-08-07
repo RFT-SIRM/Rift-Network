@@ -4,10 +4,9 @@
 [![Solana](https://img.shields.io/badge/Chain-Solana-9945ff?style=for-the-badge)](https://solana.com)
 [![SPL](https://img.shields.io/badge/Protocol-SPL%20Token-3b82f6?style=for-the-badge)](https://spl.solana.com)
 [![Anchor](https://img.shields.io/badge/Framework-Anchor-0ea5e9?style=for-the-badge)](https://www.anchor-lang.com)
-[![Audit](https://img.shields.io/badge/Security-14%20Findings%20Addressed-22c55e?style=for-the-badge)](#-security-model)
-[![Fuzz](https://img.shields.io/badge/Fuzzing-2.5B%2B%20Runs-10b981?style=for-the-badge)](#-verification)
-[![License](https://img.shields.io/badge/License-Apache%202.0-eab308?style=for-the-badge)](LICENSE)
-
+[![Security](https://img.shields.io/badge/Security-14%20Findings%20Addressed-22c55e?style=for-the-badge)](https://github.com/RFT-SIRM/Rift-Network#-security-model)
+[![Fuzzing](https://img.shields.io/badge/Fuzzing-2.5B%2B%20Runs-10b981?style=for-the-badge)](https://github.com/RFT-SIRM/Rift-Network#-verification)
+[![License](https://img.shields.io/badge/License-Apache%202.0-eab308?style=for-the-badge)](https://github.com/RFT-SIRM/Rift-Network/blob/main/LICENSE)
 
 **Solana On-Chain Protocol · SIRM Invariant Enforcement · SPL Token Layer**
 
@@ -32,24 +31,24 @@ _Part of the [UltraCore RFT](https://github.com/RFT-SIRM/UltraCore-RFT) executio
 
 ```mermaid
 flowchart TB
-    subgraph CORE["Core Layer (ultra_core_rift)"]
-        I1["I1: Supply Conservation"]
-        I2["I2: Mint/Burn Accounting"]
-        I3["I3: Dust Bound"]
-        I4["I4: Debt Limit"]
-    end
-    subgraph TOKEN["Token Layer (rift_token)"]
-        SPL["SPL Token Mint"]
-        FEE["Protocol Fee ≤ 0.10%"]
-        REBASE["Field-Pressure Minting"]
-    end
-    subgraph VERIFY["Verification"]
-        AUDIT["14 Security Findings<br/>Addressed"]
-        FUZZ["2.5B+ Fuzz Runs"]
-    end
-    CORE --> TOKEN
-    CORE --> VERIFY
-    TOKEN --> VERIFY
+ subgraph CORE["Core Layer (ultra_core_rift)"]
+ I1["I1: Supply Conservation"]
+ I2["I2: Mint/Burn Accounting"]
+ I3["I3: Dust Bound"]
+ I4["I4: Debt Limit"]
+ end
+ subgraph TOKEN["Token Layer (rift_token)"]
+ SPL["SPL Token Mint"]
+ FEE["Protocol Fee ≤ 0.10%"]
+ REBASE["Field-Pressure Minting"]
+ end
+ subgraph VERIFY["Verification"]
+ AUDIT["14 Security Findings\nAddressed"]
+ FUZZ["2.5B+ Fuzz Runs"]
+ end
+ CORE --> TOKEN
+ CORE --> VERIFY
+ TOKEN --> VERIFY
 ```
 
 | Metric | Value |
@@ -71,18 +70,18 @@ The architecture separates mathematical state from economic interface:
 
 ```mermaid
 flowchart TB
-    subgraph L1["Layer 1: Core State Machine"]
-        CS["ultra_core_rift<br/>Invariant Enforcement<br/>Gate Authority<br/>Pause Mechanism"]
-    end
-    subgraph L2["Layer 2: Token Interface"]
-        TS["rift_token<br/>SPL Mint<br/>Field-Pressure Issuance<br/>Fee Collection"]
-    end
-    subgraph L3["Layer 3: Shared Primitives"]
-        CM["rift-common<br/>Constants · Errors · Types"]
-    end
-    L3 --> L1
-    L3 --> L2
-    L1 -->|"reads only"| L2
+ subgraph L1["Layer 1: Core State Machine"]
+ CS["ultra_core_rift\nInvariant Enforcement\nGate Authority\nPause Mechanism"]
+ end
+ subgraph L2["Layer 2: Token Interface"]
+ TS["rift_token\nSPL Mint\nField-Pressure Issuance\nFee Collection"]
+ end
+ subgraph L3["Layer 3: Shared Primitives"]
+ CM["rift-common\nConstants · Errors · Types"]
+ end
+ L3 --> L1
+ L3 --> L2
+ L1 -->|"reads only"| L2
 ```
 
 **Key principle:** The token layer never writes to `CoreState`. It reads `global_field` and `paused`, but all invariant logic lives in the core program. This separation means the SPL token interface cannot corrupt the mathematical model — by construction.
@@ -96,7 +95,7 @@ All RFT-SIRM systems share a single mathematical foundation. Rift Network implem
 ```
 I1: total_supply = total_base_sum + global_field × p
 I2: total_supply = total_minted − total_burned
-I3: dust_accumulator < p  (when p > 0)
+I3: dust_accumulator < p (when p > 0)
 I4: effective_balance[i] ≥ −(total_supply / 10p)
 ```
 
@@ -107,12 +106,12 @@ Where `effective_balance[i] = base_balance[i] + global_field`.
 Standard Solana token distribution:
 ```
 for each participant:
-    balance[i] += reward / N     ← O(N) CPI calls, O(N) rent
+ balance[i] += reward / N ← O(N) CPI calls, O(N) rent
 ```
 
 Rift approach:
 ```
-global_field += reward / p       ← O(1), one account update, all participants
+global_field += reward / p ← O(1), one account update, all participants
 ```
 
 At 1,000,000 participants on Solana:
@@ -248,39 +247,39 @@ cargo clippy --workspace --exclude ultra_core_rift --exclude rift_token --all-ta
 
 ```mermaid
 flowchart TB
-    subgraph ULTRA["UltraCore RFT Laboratory"]
-        EP["Execution Platform"]
-    end
-    subgraph L1["Standalone Core"]
-        RLB["Rift-L1-Blockchain<br/>Rust · 1T+ ops fuzzed"]
-    end
-    subgraph ONCHAIN["On-Chain Implementation"]
-        RN["Rift Network<br/>Solana · Anchor · SPL"]
-    end
-    subgraph RESEARCH["Runtime Research"]
-        MEM["Memory Contexts<br/>svm#25"]
-        SCHED["Scheduler<br/>agave#14274"]
-    end
-    ULTRA --> L1
-    ULTRA --> ONCHAIN
-    ULTRA --> RESEARCH
-    L1 -.->|"same invariants"| ONCHAIN
+ subgraph ULTRA["UltraCore RFT Laboratory"]
+ EP["Execution Platform"]
+ end
+ subgraph L1["Standalone Core"]
+ RLB["Rift-L1-Blockchain\nRust · 1T+ ops fuzzed"]
+ end
+ subgraph ONCHAIN["On-Chain Implementation"]
+ RN["Rift Network\nSolana · Anchor · SPL"]
+ end
+ subgraph RESEARCH["Runtime Research"]
+ MEM["ABIv2 Memory Contexts\n(PoC / Research)"]
+ SCHED["Scheduler\nagave#14274"]
+ end
+ ULTRA --> L1
+ ULTRA --> ONCHAIN
+ ULTRA --> RESEARCH
+ L1 -.->|"same invariants"| ONCHAIN
 ```
 
 | Repository | Role | Relation to Rift Network |
 | --- | --- | --- |
 | [UltraCore-RFT](https://github.com/RFT-SIRM/UltraCore-RFT) | Central laboratory & documentation | Parent organization |
 | [Rift-L1-Blockchain](https://github.com/RFT-SIRM/Rift-L1-Blockchain) | Standalone Rust validator core | Same invariants, different runtime |
-| [agave-abiv2-memory-contexts](https://github.com/RFT-SIRM/agave-abiv2-memory-contexts) | SVM memory isolation research | Complementary runtime research |
+| [agave-abiv2-memory-contexts](https://github.com/RFT-SIRM/agave-abiv2-memory-contexts) | SVM memory isolation research (PoC) | Complementary runtime research |
 | [agave-rift-scheduler](https://github.com/RFT-SIRM/agave-rift-scheduler) | Conflict-aware scheduling | Complementary runtime research |
 
 * * *
 
 ## 📋 License
 
-[![License](https://img.shields.io/badge/License-Apache%202.0-eab308?style=for-the-badge)](LICENSE)
+[![License](https://img.shields.io/badge/License-Apache%202.0-eab308?style=for-the-badge)](https://github.com/RFT-SIRM/Rift-Network/blob/main/LICENSE)
 
- **[Apache License 2.0](LICENSE)** 
+ **[Apache License 2.0](LICENSE)**
 
 * * *
 
