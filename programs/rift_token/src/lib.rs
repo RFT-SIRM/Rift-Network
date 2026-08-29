@@ -75,6 +75,8 @@ pub enum TokenError {
     ProtocolPaused,
     #[msg("Unauthorized gate")]
     UnauthorizedGate,
+    #[msg("Amount exceeds the soft launch limit for this window.")]
+    SoftLaunchLimitExceeded,
 }
 
 // ============================================================================
@@ -105,6 +107,9 @@ pub mod rift_token {
         state.total_shares = 0;
         state.rift_multiplier = 1_000_000_000_000_000u128;
         state.bump = ctx.bumps.rift_token_state;
+        state.soft_launch_limit = 5_000_000_000u64;
+        state.soft_launch_duration = 172_800i64;
+        state.launch_timestamp = Clock::get()?.unix_timestamp;
 
         // founder_share = initial_supply * FOUNDER_SHARE_BPS / 10_000
         // Intermediate is u128 to avoid overflow during multiplication;
@@ -172,6 +177,16 @@ pub mod rift_token {
         require!(!core.paused, TokenError::ProtocolPaused);
 
         let state = &mut ctx.accounts.rift_token_state;
+
+        // Soft launch cap: while inside the launch window, each issue_rift call
+        // is limited to soft_launch_limit base_amount (anti-whale / anti-drain).
+        let now = Clock::get()?.unix_timestamp;
+        if now < state.launch_timestamp + state.soft_launch_duration {
+            require!(
+                base_amount <= state.soft_launch_limit,
+                TokenError::SoftLaunchLimitExceeded
+            );
+        }
 
         // fee_amount = base_amount * fee_bps / 10_000
         // base_amount is u64; intermediate is u128 to avoid overflow.
@@ -311,6 +326,18 @@ pub mod rift_token {
 
         Ok(())
     }
+
+    /// Gate-only: update the soft launch limit and/or duration.
+    pub fn set_soft_launch_params(
+        ctx: Context<SetSoftLaunchParams>,
+        new_limit: u64,
+        new_duration: i64,
+    ) -> Result<()> {
+        let state = &mut ctx.accounts.rift_token_state;
+        state.soft_launch_limit = new_limit;
+        state.soft_launch_duration = new_duration;
+        Ok(())
+    }
 }
 
 // ============================================================================
@@ -319,16 +346,19 @@ pub mod rift_token {
 
 #[account]
 pub struct RiftTokenState {
-    pub authority: Pubkey,     // 32 — gate that controls rebase
-    pub core_state: Pubkey,    // 32 — address of the bound CoreState
-    pub admin_vault: Pubkey,   // 32 — receives genesis share and SOL fees
-    pub decimals: u8,          //  1
-    pub fee_bps: u16,          //  2
-    pub total_shares: u64,     //  8
-    pub rift_multiplier: u128, // 16
-    pub bump: u8,              //  1
+    pub authority: Pubkey,         // 32 — gate that controls rebase
+    pub core_state: Pubkey,        // 32 — address of the bound CoreState
+    pub admin_vault: Pubkey,       // 32 — receives genesis share and SOL fees
+    pub decimals: u8,              //  1
+    pub fee_bps: u16,              //  2
+    pub total_shares: u64,         //  8
+    pub rift_multiplier: u128,     // 16
+    pub bump: u8,                  //  1
+    pub soft_launch_limit: u64,    //  8 — max base_amount per issue_rift call during launch window
+    pub soft_launch_duration: i64, //  8 — seconds after launch_timestamp the limit applies
+    pub launch_timestamp: i64,     //  8 — unix timestamp set at initialize
 }
-// On-chain size: 8 (discriminator) + 32*3 + 1 + 2 + 8 + 16 + 1 = 132 bytes
+// On-chain size: 8 (discriminator) + 32*3 + 1 + 2 + 8 + 16 + 1 + 8 + 8 + 8 = 156 bytes
 
 // ============================================================================
 // INSTRUCTION CONTEXTS
@@ -339,7 +369,7 @@ pub struct Initialize<'info> {
     #[account(
         init,
         payer = gate,
-        space = 8 + 32 * 3 + 1 + 2 + 8 + 16 + 1, // = 132
+        space = 8 + 32 * 3 + 1 + 2 + 8 + 16 + 1 + 8 + 8 + 8, // = 156
         seeds = [b"rift_token_state"],
         bump
     )]
@@ -428,6 +458,17 @@ pub struct Rebase<'info> {
             @ TokenError::InvalidCoreState
     )]
     pub core_state: UncheckedAccount<'info>,
+
+    pub authority: Signer<'info>,
+}
+
+#[derive(Accounts)]
+pub struct SetSoftLaunchParams<'info> {
+    #[account(
+        mut,
+        has_one = authority @ TokenError::UnauthorizedGate
+    )]
+    pub rift_token_state: Account<'info, RiftTokenState>,
 
     pub authority: Signer<'info>,
 }
