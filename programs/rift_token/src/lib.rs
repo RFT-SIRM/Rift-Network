@@ -17,16 +17,26 @@ pub struct CoreState {
 
 impl CoreState {
     pub fn check_invariant(&self) -> Result<()> {
-        let field_contrib = self.global_field.checked_mul(self.p as i128).ok_or(ErrorCode::AccountDidNotSerialize)?;
-        let expected = self.total_base_sum.checked_add(field_contrib).ok_or(ErrorCode::AccountDidNotSerialize)?;
-        require!(self.total_supply as i128 == expected, ErrorCode::AccountDidNotSerialize);
+        let field_contrib = self
+            .global_field
+            .checked_mul(self.p as i128)
+            .ok_or(ErrorCode::AccountDidNotSerialize)?;
+        let expected = self
+            .total_base_sum
+            .checked_add(field_contrib)
+            .ok_or(ErrorCode::AccountDidNotSerialize)?;
+        require!(
+            self.total_supply as i128 == expected,
+            ErrorCode::AccountDidNotSerialize
+        );
         Ok(())
     }
 }
 use anchor_spl::token::{self, Mint, Token, TokenAccount};
 declare_id!("58NUZF9VQhGRP9vdrLz3tLGDy7qHB5XGoCrEQr9un4N6");
 
-pub const ULTRA_CORE_RIFT_ID: Pubkey = anchor_lang::prelude::pubkey!("ApQFryfGR7pWdThYVNqTJh8YX2c7ca8M1voeJsizJohR");
+pub const ULTRA_CORE_RIFT_ID: Pubkey =
+    anchor_lang::prelude::pubkey!("ApQFryfGR7pWdThYVNqTJh8YX2c7ca8M1voeJsizJohR");
 
 // ============================================================================
 // CONSTANTS
@@ -152,7 +162,8 @@ pub mod rift_token {
     ///   - shares_to_mint > 0 enforced so users cannot pay a fee and receive nothing.
     ///   - All u128 → u64 downcasts are checked.
     pub fn issue_rift(ctx: Context<IssueRift>, base_amount: u64) -> Result<()> {
-        let core = CoreState::try_deserialize(&mut &ctx.accounts.core_state.try_borrow_data()?[..])?;
+        let core =
+            CoreState::try_deserialize(&mut &ctx.accounts.core_state.try_borrow_data()?[..])?;
 
         // Verify the economic invariant is intact before any mutation.
         core.check_invariant()?;
@@ -277,7 +288,8 @@ pub mod rift_token {
     /// On-chain minting always recomputes from global_field directly.
     /// Intentionally does not check core.paused: gate operations are exempt.
     pub fn rebase(ctx: Context<Rebase>) -> Result<()> {
-        let core = CoreState::try_deserialize(&mut &ctx.accounts.core_state.try_borrow_data()?[..])?;
+        let core =
+            CoreState::try_deserialize(&mut &ctx.accounts.core_state.try_borrow_data()?[..])?;
         let state = &mut ctx.accounts.rift_token_state;
 
         core.check_invariant()?;
