@@ -3,7 +3,17 @@
 use anchor_lang::prelude::*;
 use rift_common::*;
 
-declare_id!("ApQFryfGR7pWdThYVNqTJh8YX2c7ca8M1voeJsizJohR");
+declare_id!("45oaP6nFPqCNcd6zcTXHLFNYdujNDHyKiNdDQQ4H4arM");
+
+use solana_security_txt::security_txt;
+
+security_txt!(
+    name: "Rift Network",
+    project_url: "https://github.com/RFT-SIRM/Rift-Network",
+    contacts: "https://github.com/RFT-SIRM/Rift-Network/issues",
+    source_code: "https://github.com/RFT-SIRM/Rift-Network"
+);
+
 
 // ============================================================================
 // PROGRAM

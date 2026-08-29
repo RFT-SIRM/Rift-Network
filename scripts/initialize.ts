@@ -24,14 +24,14 @@ const idPath = path.join(os.homedir(), ".config", "solana", "id.json");
 const secretKey = JSON.parse(fs.readFileSync(idPath, "utf-8"));
 const wallet = Keypair.fromSecretKey(new Uint8Array(secretKey));
 
-const connection = new Connection("http://localhost:8899", "confirmed");
+const connection = new Connection("https://api.devnet.solana.com", "confirmed");
 const provider = new AnchorProvider(connection, new anchor.Wallet(wallet), {
   commitment: "confirmed",
 });
 anchor.setProvider(provider);
 
-const ULTRA_CORE_RIFT_ID = new PublicKey("ApQFryfGR7pWdThYVNqTJh8YX2c7ca8M1voeJsizJohR");
-const RIFT_TOKEN_ID = new PublicKey("58NUZF9VQhGRP9vdrLz3tLGDy7qHB5XGoCrEQr9un4N6");
+const ULTRA_CORE_RIFT_ID = new PublicKey("45oaP6nFPqCNcd6zcTXHLFNYdujNDHyKiNdDQQ4H4arM");
+const RIFT_TOKEN_ID = new PublicKey("6zXnKoRT9B46JAVVBktCkgGWRJhcPsfyMX9NwR67q64x");
 
 const ultraCoreIdlRaw = JSON.parse(fs.readFileSync("target/idl/ultra_core_rift.json", "utf-8"));
 ultraCoreIdlRaw.address = ULTRA_CORE_RIFT_ID.toBase58();

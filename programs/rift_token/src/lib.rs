@@ -33,10 +33,20 @@ impl CoreState {
     }
 }
 use anchor_spl::token::{self, Mint, Token, TokenAccount};
-declare_id!("58NUZF9VQhGRP9vdrLz3tLGDy7qHB5XGoCrEQr9un4N6");
+declare_id!("6zXnKoRT9B46JAVVBktCkgGWRJhcPsfyMX9NwR67q64x");
+
+use solana_security_txt::security_txt;
+
+security_txt!(
+    name: "Rift Network",
+    project_url: "https://github.com/RFT-SIRM/Rift-Network",
+    contacts: "https://github.com/RFT-SIRM/Rift-Network/issues",
+    source_code: "https://github.com/RFT-SIRM/Rift-Network"
+);
+
 
 pub const ULTRA_CORE_RIFT_ID: Pubkey =
-    anchor_lang::prelude::pubkey!("ApQFryfGR7pWdThYVNqTJh8YX2c7ca8M1voeJsizJohR");
+    anchor_lang::prelude::pubkey!("45oaP6nFPqCNcd6zcTXHLFNYdujNDHyKiNdDQQ4H4arM");
 
 // ============================================================================
 // CONSTANTS
