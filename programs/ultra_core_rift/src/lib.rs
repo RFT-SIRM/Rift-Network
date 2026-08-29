@@ -3,7 +3,7 @@
 use anchor_lang::prelude::*;
 use rift_common::*;
 
-declare_id!("Fg6PaFpoGXkYsidMpWxTWqkYqk5Nnq4P6A4jR4Jm5Y8A");
+declare_id!("ApQFryfGR7pWdThYVNqTJh8YX2c7ca8M1voeJsizJohR");
 
 // ============================================================================
 // PROGRAM

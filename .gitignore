@@ -10,3 +10,7 @@
 # Fuzzing corpus/artifacts (local runs)
 /fuzz/corpus/
 /fuzz/artifacts/
+test-ledger/
+node_modules/
+programs/*/target-rift/
+programs/*/target-ultra/

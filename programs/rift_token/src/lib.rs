@@ -1,9 +1,32 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Mint, Token, TokenAccount};
-use rift_common::RiftError;
-use ultra_core_rift::CoreState;
 
-declare_id!("5yYh3k3nZs9q2xVhQ1uK7q9s7Jc8mG2hLs2sP3vR9b1A");
+// CoreState definition and methods copied from ultra_core_rift
+#[account]
+#[derive(Debug)]
+pub struct CoreState {
+    pub gate: Pubkey,
+    pub paused: bool,
+    pub global_field: i128,
+    pub total_base_sum: i128,
+    pub total_supply: u128,
+    pub total_minted: u128,
+    pub total_burned: u128,
+    pub p: u64,
+    pub dust_accumulator: u128,
+}
+
+impl CoreState {
+    pub fn check_invariant(&self) -> Result<()> {
+        let field_contrib = self.global_field.checked_mul(self.p as i128).ok_or(ErrorCode::AccountDidNotSerialize)?;
+        let expected = self.total_base_sum.checked_add(field_contrib).ok_or(ErrorCode::AccountDidNotSerialize)?;
+        require!(self.total_supply as i128 == expected, ErrorCode::AccountDidNotSerialize);
+        Ok(())
+    }
+}
+use anchor_spl::token::{self, Mint, Token, TokenAccount};
+declare_id!("58NUZF9VQhGRP9vdrLz3tLGDy7qHB5XGoCrEQr9un4N6");
+
+pub const ULTRA_CORE_RIFT_ID: Pubkey = anchor_lang::prelude::pubkey!("ApQFryfGR7pWdThYVNqTJh8YX2c7ca8M1voeJsizJohR");
 
 // ============================================================================
 // CONSTANTS
@@ -36,6 +59,12 @@ pub enum TokenError {
     /// bypass the protocol fee entirely on micro-amounts.
     #[msg("Amount too small: fee rounds to zero. Increase base_amount.")]
     AmountTooSmall,
+    #[msg("Math overflow")]
+    MathOverflow,
+    #[msg("Protocol is paused")]
+    ProtocolPaused,
+    #[msg("Unauthorized gate")]
+    UnauthorizedGate,
 }
 
 // ============================================================================
@@ -72,13 +101,13 @@ pub mod rift_token {
         // result is <= initial_supply (u64), so the downcast is safe.
         let founder_share_u128 = (initial_supply as u128)
             .checked_mul(FOUNDER_SHARE_BPS as u128)
-            .ok_or(RiftError::MathOverflow)?
+            .ok_or(TokenError::MathOverflow)?
             .checked_div(10_000)
-            .ok_or(RiftError::MathOverflow)?;
+            .ok_or(TokenError::MathOverflow)?;
 
         let founder_share: u64 = founder_share_u128
             .try_into()
-            .map_err(|_| RiftError::MathOverflow)?;
+            .map_err(|_| TokenError::MathOverflow)?;
 
         if founder_share > 0 {
             let auth_bump = ctx.bumps.rift_authority;
@@ -101,7 +130,7 @@ pub mod rift_token {
             state.total_shares = state
                 .total_shares
                 .checked_add(founder_share)
-                .ok_or(RiftError::MathOverflow)?;
+                .ok_or(TokenError::MathOverflow)?;
         }
 
         Ok(())
@@ -123,13 +152,13 @@ pub mod rift_token {
     ///   - shares_to_mint > 0 enforced so users cannot pay a fee and receive nothing.
     ///   - All u128 → u64 downcasts are checked.
     pub fn issue_rift(ctx: Context<IssueRift>, base_amount: u64) -> Result<()> {
-        let core = &ctx.accounts.core_state;
+        let core = CoreState::try_deserialize(&mut &ctx.accounts.core_state.try_borrow_data()?[..])?;
 
         // Verify the economic invariant is intact before any mutation.
         core.check_invariant()?;
 
         // check_invariant does not inspect the paused flag.
-        require!(!core.paused, RiftError::ProtocolPaused);
+        require!(!core.paused, TokenError::ProtocolPaused);
 
         let state = &mut ctx.accounts.rift_token_state;
 
@@ -139,13 +168,13 @@ pub mod rift_token {
         // but we use try_into for explicit correctness.
         let fee_amount_u128 = (base_amount as u128)
             .checked_mul(state.fee_bps as u128)
-            .ok_or(RiftError::MathOverflow)?
+            .ok_or(TokenError::MathOverflow)?
             .checked_div(10_000)
-            .ok_or(RiftError::MathOverflow)?;
+            .ok_or(TokenError::MathOverflow)?;
 
         let fee_amount: u64 = fee_amount_u128
             .try_into()
-            .map_err(|_| RiftError::MathOverflow)?;
+            .map_err(|_| TokenError::MathOverflow)?;
 
         // [F-04] FIX: Reject micro-amounts that would let a caller bypass the
         // protocol fee due to integer truncation. When fee_bps = 0 the protocol
@@ -156,7 +185,7 @@ pub mod rift_token {
 
         let amount_after_fee = base_amount
             .checked_sub(fee_amount)
-            .ok_or(RiftError::MathOverflow)?;
+            .ok_or(TokenError::MathOverflow)?;
 
         // field_pressure = max(|global_field|, MIN_FIELD_PRESSURE)
         // unsigned_abs() on i128 gives u128; max() floors it at MIN_FIELD_PRESSURE.
@@ -175,9 +204,9 @@ pub mod rift_token {
         // fits in u128::MAX (~3.4e38). Both operations are safe.
         let shares_to_mint_u128 = (amount_after_fee as u128)
             .checked_mul(mint_multiplier)
-            .ok_or(RiftError::MathOverflow)?
+            .ok_or(TokenError::MathOverflow)?
             .checked_div(1_000_000_000_000u128)
-            .ok_or(RiftError::MathOverflow)?;
+            .ok_or(TokenError::MathOverflow)?;
 
         // Prevent the pathological case where the user pays a fee but receives
         // zero tokens. SPL Token's mint_to silently accepts zero amounts.
@@ -188,7 +217,7 @@ pub mod rift_token {
         // we use try_into to catch any future formula changes.
         let shares_to_mint: u64 = shares_to_mint_u128
             .try_into()
-            .map_err(|_| RiftError::MathOverflow)?;
+            .map_err(|_| TokenError::MathOverflow)?;
 
         // Collect the protocol fee in SOL. The entire instruction is atomic:
         // if the subsequent mint CPI fails, this transfer is also rolled back.
@@ -225,7 +254,7 @@ pub mod rift_token {
         state.total_shares = state
             .total_shares
             .checked_add(shares_to_mint)
-            .ok_or(RiftError::MathOverflow)?;
+            .ok_or(TokenError::MathOverflow)?;
 
         emit!(IssueRiftEvent {
             user: ctx.accounts.user.key(),
@@ -248,7 +277,7 @@ pub mod rift_token {
     /// On-chain minting always recomputes from global_field directly.
     /// Intentionally does not check core.paused: gate operations are exempt.
     pub fn rebase(ctx: Context<Rebase>) -> Result<()> {
-        let core = &ctx.accounts.core_state;
+        let core = CoreState::try_deserialize(&mut &ctx.accounts.core_state.try_borrow_data()?[..])?;
         let state = &mut ctx.accounts.rift_token_state;
 
         core.check_invariant()?;
@@ -305,7 +334,9 @@ pub struct Initialize<'info> {
     pub rift_token_state: Account<'info, RiftTokenState>,
 
     /// The CoreState this token layer is bound to. Address stored at init.
-    pub core_state: Account<'info, CoreState>,
+    /// CHECK: Owned by ultra_core_rift; only the address is used here.
+    #[account(owner = ULTRA_CORE_RIFT_ID)]
+    pub core_state: UncheckedAccount<'info>,
 
     #[account(mut)]
     pub rift_mint: Account<'info, Mint>,
@@ -335,11 +366,13 @@ pub struct IssueRift<'info> {
 
     /// CoreState must match the address stored at initialization.
     /// This prevents an attacker from supplying a manipulated CoreState.
+    /// CHECK: Owned by ultra_core_rift; manually deserialized in the handler.
     #[account(
+        owner = ULTRA_CORE_RIFT_ID,
         constraint = core_state.key() == rift_token_state.core_state
             @ TokenError::InvalidCoreState
     )]
-    pub core_state: Account<'info, CoreState>,
+    pub core_state: UncheckedAccount<'info>,
 
     #[account(mut)]
     pub rift_mint: Account<'info, Mint>,
@@ -371,16 +404,18 @@ pub struct Rebase<'info> {
     /// Only the authority stored at initialization (the gate) may call rebase.
     #[account(
         mut,
-        has_one = authority @ RiftError::UnauthorizedGate
+        has_one = authority @ TokenError::UnauthorizedGate
     )]
     pub rift_token_state: Account<'info, RiftTokenState>,
 
     /// CoreState must match the address stored at initialization.
+    /// CHECK: Owned by ultra_core_rift; manually deserialized in the handler.
     #[account(
+        owner = ULTRA_CORE_RIFT_ID,
         constraint = core_state.key() == rift_token_state.core_state
             @ TokenError::InvalidCoreState
     )]
-    pub core_state: Account<'info, CoreState>,
+    pub core_state: UncheckedAccount<'info>,
 
     pub authority: Signer<'info>,
 }
