@@ -44,7 +44,6 @@ security_txt!(
     source_code: "https://github.com/RFT-SIRM/Rift-Network"
 );
 
-
 pub const ULTRA_CORE_RIFT_ID: Pubkey =
     anchor_lang::prelude::pubkey!("45oaP6nFPqCNcd6zcTXHLFNYdujNDHyKiNdDQQ4H4arM");
 
