@@ -681,7 +681,7 @@ impl TransferCtx<'_> {
 
 #[derive(Accounts)]
 pub struct Initialize<'info> {
-    #[account(init, payer = payer, space = CoreState::SPACE)]
+    #[account(init, payer = payer, space = CoreState::SPACE, seeds = [b"core_state"], bump)]
     pub core_state: Account<'info, CoreState>,
     #[account(mut)]
     pub payer: Signer<'info>,

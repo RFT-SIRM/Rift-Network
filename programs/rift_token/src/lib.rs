@@ -392,7 +392,7 @@ pub struct Initialize<'info> {
     #[account(mut)]
     pub rift_mint: Account<'info, Mint>,
 
-    #[account(mut)]
+    #[account(mut, constraint = admin_vault_token_account.mint == rift_mint.key() @ TokenError::InvalidAdminVault)]
     pub admin_vault_token_account: Account<'info, TokenAccount>,
 
     /// CHECK: Admin vault. Receives the genesis share (SPL) and protocol fees
@@ -428,7 +428,7 @@ pub struct IssueRift<'info> {
     #[account(mut)]
     pub rift_mint: Account<'info, Mint>,
 
-    #[account(mut)]
+    #[account(mut, constraint = user_token_account.owner == user.key() @ TokenError::InvalidAdminVault)]
     pub user_token_account: Account<'info, TokenAccount>,
 
     /// CHECK: PDA mint authority. Verified by seeds; signed in CPI.
