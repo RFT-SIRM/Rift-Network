@@ -12,3 +12,4 @@ overflow-checks = true
 
 [workspace.dependencies]
 blake3 = "=1.5.0"
+

@@ -3,26 +3,22 @@ anchor_version = "1.1.2"
 solana_version = "2.1.5"
 
 [features]
-seeds = false
+resolution = true
 skip-lint = false
 
-[programs.localnet]
-ultra_core_rift = "ApQFryfGR7pWdThYVNqTJh8YX2c7ca8M1voeJsizJohR"
-rift_token = "58NUZF9VQhGRP9vdrLz3tLGDy7qHB5XGoCrEQr9un4N6"
+[programs.devnet]
+rift_token = "GdTffSB1aNxfCeZW3PG2S7c788DnZgduJ68jWak3aJrp"
+ultra_core_rift = "CBrsXBaa1DTHFdCwCkeQHm3bQKRFaWfPx6bKNmM5r5uy"
 
-[registry]
-url = "https://api.apr.dev"
+[programs.localnet]
+rift_token = "G54ub1p1SLho4JXF6kDJzu3WaBCN6YLYF8QgjjG3noZy"
+ultra_core_rift = "6cTGeWKXiZHRQBMqvv4Ce3E8YXX4g456rN7JnuKdELmo"
 
 [provider]
-cluster = "localnet"
+cluster = "devnet"
 wallet = "~/.config/solana/id.json"
 
 [workspace]
-members = [
-  "programs/ultra_core_rift",
-  "programs/rift_token",
-]
+members = ["programs/ultra_core_rift", "programs/rift_token"]
 
-[programs.devnet]
-ultra_core_rift = "45oaP6nFPqCNcd6zcTXHLFNYdujNDHyKiNdDQQ4H4arM"
-rift_token = "6zXnKoRT9B46JAVVBktCkgGWRJhcPsfyMX9NwR67q64x"
+[hooks]

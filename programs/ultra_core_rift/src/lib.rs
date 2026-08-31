@@ -3,7 +3,7 @@
 use anchor_lang::prelude::*;
 use rift_common::*;
 
-declare_id!("45oaP6nFPqCNcd6zcTXHLFNYdujNDHyKiNdDQQ4H4arM");
+declare_id!("CBrsXBaa1DTHFdCwCkeQHm3bQKRFaWfPx6bKNmM5r5uy");
 
 use solana_security_txt::security_txt;
 

@@ -30,8 +30,8 @@ const provider = new AnchorProvider(connection, new anchor.Wallet(wallet), {
 });
 anchor.setProvider(provider);
 
-const ULTRA_CORE_RIFT_ID = new PublicKey("45oaP6nFPqCNcd6zcTXHLFNYdujNDHyKiNdDQQ4H4arM");
-const RIFT_TOKEN_ID = new PublicKey("6zXnKoRT9B46JAVVBktCkgGWRJhcPsfyMX9NwR67q64x");
+const ULTRA_CORE_RIFT_ID = new PublicKey("CBrsXBaa1DTHFdCwCkeQHm3bQKRFaWfPx6bKNmM5r5uy");
+const RIFT_TOKEN_ID = new PublicKey("GdTffSB1aNxfCeZW3PG2S7c788DnZgduJ68jWak3aJrp");
 
 const ultraCoreIdlRaw = JSON.parse(fs.readFileSync("target/idl/ultra_core_rift.json", "utf-8"));
 ultraCoreIdlRaw.address = ULTRA_CORE_RIFT_ID.toBase58();
@@ -45,17 +45,19 @@ async function main() {
   console.log("Wallet:", wallet.publicKey.toBase58());
 
   console.log("\n=== 1. Initializing ultra_core_rift ===");
-  const coreState = Keypair.generate();
-  console.log("CoreState address:", coreState.publicKey.toBase58());
-  
+  const [coreStatePda] = PublicKey.findProgramAddressSync(
+    [Buffer.from("core_state")],
+    ULTRA_CORE_RIFT_ID
+  );
+  console.log("CoreState address:", coreStatePda.toBase58());
+
   await (ultraCoreProgram.methods as any)
     .initialize(wallet.publicKey)
     .accounts({
-      coreState: coreState.publicKey,
+      coreState: coreStatePda,
       payer: wallet.publicKey,
       systemProgram: SystemProgram.programId,
     })
-    .signers([coreState])
     .rpc();
   console.log("✅ CoreState initialized");
 
@@ -119,7 +121,7 @@ async function main() {
     .initialize(9, 10, new BN("1000000000000"))
     .accounts({
       riftTokenState: riftTokenState,
-      coreState: coreState.publicKey,
+      coreState: coreStatePda,
       riftMint: mintKeypair.publicKey,
       adminVaultTokenAccount: adminVaultATA,
       adminVault: wallet.publicKey,
@@ -132,7 +134,7 @@ async function main() {
   console.log("✅ RiftToken initialized");
 
   console.log("\n🎉 DONE! Save these addresses:");
-  console.log("CoreState:", coreState.publicKey.toBase58());
+  console.log("CoreState:", coreStatePda.toBase58());
   console.log("RiftTokenState:", riftTokenState.toBase58());
   console.log("RiftMint:", mintKeypair.publicKey.toBase58());
   console.log("AdminVaultATA:", adminVaultATA.toBase58());

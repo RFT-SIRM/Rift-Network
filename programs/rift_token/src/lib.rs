@@ -33,7 +33,7 @@ impl CoreState {
     }
 }
 use anchor_spl::token::{self, Mint, Token, TokenAccount};
-declare_id!("6zXnKoRT9B46JAVVBktCkgGWRJhcPsfyMX9NwR67q64x");
+declare_id!("GdTffSB1aNxfCeZW3PG2S7c788DnZgduJ68jWak3aJrp");
 
 use solana_security_txt::security_txt;
 
@@ -45,7 +45,7 @@ security_txt!(
 );
 
 pub const ULTRA_CORE_RIFT_ID: Pubkey =
-    anchor_lang::prelude::pubkey!("45oaP6nFPqCNcd6zcTXHLFNYdujNDHyKiNdDQQ4H4arM");
+    anchor_lang::prelude::pubkey!("CBrsXBaa1DTHFdCwCkeQHm3bQKRFaWfPx6bKNmM5r5uy");
 
 // ============================================================================
 // CONSTANTS
