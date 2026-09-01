@@ -210,6 +210,25 @@ This means even a fully compromised token program cannot violate the core invari
 | L2 — Unit | Workspace tests (excluding Anchor programs) | `cargo test --workspace` |
 | L3 — Fuzzing | 2.5B+ runs across protocol modes | 0 invariant violations |
 | L4 — Audit | Independent security review | 14 findings addressed |
+| L5 — On-Chain | Reproducible build (`solana-verify`) | Hashes match, uploaded on-chain |
+
+### On-Chain Program Verification
+
+Both programs are built reproducibly and verified on-chain via `solana-verify`.
+
+| Program | Program ID | Executable Hash (SHA-256) | Network |
+| --- | --- | --- | --- |
+| `ultra_core_rift` | `CBrsXBaa1DTHFdCwCkeQHm3bQKRFaWfPx6bKNmM5r5uy` | `087d51e3f0c413c1a33e6ac8565baabe31913a98ad289af47631d73a99e47a09` | Devnet |
+| `rift_token` | `GdTffSB1aNxfCeZW3PG2S7c788DnZgduJ68jWak3aJrp` | `5b5832c3eeef3ca627194e6d0b9889c0255bc582f21d3b41a927c5ae11d3a990` | Devnet |
+
+Verify yourself:
+
+```bash
+solana-verify get-program-hash CBrsXBaa1DTHFdCwCkeQHm3bQKRFaWfPx6bKNmM5r5uy \
+  --url https://api.devnet.solana.com
+solana-verify get-program-hash GdTffSB1aNxfCeZW3PG2S7c788DnZgduJ68jWak3aJrp \
+  --url https://api.devnet.solana.com
+```
 
 * * *
 
