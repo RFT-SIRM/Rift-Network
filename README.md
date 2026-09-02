@@ -128,7 +128,7 @@ This is not an optimization. It is a different mathematical model that makes lar
 
 | Account | Size | Description |
 | --- | --- | --- |
-| `CoreState` | 145 bytes | Global protocol state (not a PDA) |
+| `CoreState` | 145 bytes | Global protocol state (PDA, seeds = ["core_state"]) |
 | `UserAccount` | 56 bytes | Per-participant balance; PDA `["user", authority]` |
 | `EdgeAccount` | 24 bytes | Directed edge weight; PDA `["edge", from, to]` |
 

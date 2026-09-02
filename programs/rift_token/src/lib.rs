@@ -3,6 +3,12 @@ use anchor_lang::prelude::*;
 // CoreState definition and methods copied from ultra_core_rift
 #[account]
 #[derive(Debug)]
+// NOTE: This is a local copy of `ultra_core_rift::CoreState`, not a cross-program
+// import. Anchor's `Account<'info, T>` enforces that the account owner equals the
+// *defining* program (`crate::ID`), which breaks when reading a CoreState owned by
+// `ultra_core_rift`. We read it via `UncheckedAccount` + manual `try_deserialize`
+// instead (see IssueRift/Rebase account structs below), and keep this struct
+// definition in sync with the canonical one manually. Do not diverge the fields.
 pub struct CoreState {
     pub gate: Pubkey,
     pub paused: bool,
@@ -20,14 +26,14 @@ impl CoreState {
         let field_contrib = self
             .global_field
             .checked_mul(self.p as i128)
-            .ok_or(ErrorCode::AccountDidNotSerialize)?;
+            .ok_or(TokenError::InvariantViolation)?;
         let expected = self
             .total_base_sum
             .checked_add(field_contrib)
-            .ok_or(ErrorCode::AccountDidNotSerialize)?;
+            .ok_or(TokenError::InvariantViolation)?;
         require!(
             self.total_supply as i128 == expected,
-            ErrorCode::AccountDidNotSerialize
+            TokenError::InvariantViolation
         );
         Ok(())
     }
@@ -86,6 +92,8 @@ pub enum TokenError {
     UnauthorizedGate,
     #[msg("Amount exceeds the soft launch limit for this window.")]
     SoftLaunchLimitExceeded,
+    #[msg("CoreState economic invariant violated (I1: supply != base_sum + field*p).")]
+    InvariantViolation,
 }
 
 // ============================================================================
