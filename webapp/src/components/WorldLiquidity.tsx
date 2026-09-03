@@ -26,14 +26,10 @@ export default function WorldLiquidity() {
 
   return (
     <div className="rift-liquidity">
-      <div className="rift-liq-label">World liquidity share</div>
+      <div className="rift-liq-label">World Liquidity Share</div>
       <div className="rift-liq-pct">{displayPct}%</div>
-      <div className="rift-liq-sub">
-        Rift TVL vs global on-chain liquidity (~$3.5T)
-      </div>
-      <div className="rift-liq-bar">
-        <div className="rift-liq-fill" style={{ width: `${Math.max(pct * 100, 0.3)}%` }} />
-      </div>
+      <div className="rift-liq-sub">Rift TVL vs global on-chain liquidity (~$3.5T)</div>
+      <div className="rift-liq-bar"><div className="rift-liq-fill" style={{ width: `${Math.max(pct * 100, 0.3)}%` }} /></div>
       <div className="rift-liq-foot">
         <span>Rift TVL: ${(tokenState?.totalShares ? Number(tokenState.totalShares).toLocaleString() : '0')}</span>
         <span>Global: ~$3.5T</span>

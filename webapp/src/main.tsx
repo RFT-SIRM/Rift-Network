@@ -7,7 +7,10 @@ import App from './App'
 import { RPC_ENDPOINT } from './config'
 import './index.css'
 
-const wallets = [new PhantomWalletAdapter(), new SolflareWalletAdapter()]
+const wallets = [
+  new PhantomWalletAdapter(),
+  new SolflareWalletAdapter(),
+]
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
