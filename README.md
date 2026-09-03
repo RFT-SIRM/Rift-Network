@@ -14,6 +14,16 @@ _Part of the [UltraCore RFT](https://github.com/RFT-SIRM/UltraCore-RFT) executio
 
 * * *
 
+## 🖥️ Live Demo (Devnet)
+
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-rift--network.vercel.app-22c55e?style=for-the-badge)](https://rift-network.vercel.app)
+
+A web client for interacting with the on-chain programs is deployed at **[rift-network.vercel.app](https://rift-network.vercel.app)**.
+
+> ⚠️ **Devnet only.** This interface connects exclusively to Solana **Devnet** — a test network with no real economic value. Wallets and tokens shown are for testing the protocol only; do not send real funds. Wallet connection is required to interact with the programs (`register`, `transfer`, `issue_rift`, etc.); the site itself holds no funds and executes no logic — all invariant enforcement happens on-chain in the programs listed below.
+
+* * *
+
 ## 🎯 Start Here
 
 | Audience | Document | What You Will Learn |
