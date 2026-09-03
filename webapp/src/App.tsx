@@ -40,6 +40,7 @@ function AppInner() {
     <div className="rift-app">
       <div className="crt-overlay" />
       <div className="grid-bg" />
+      <div className="scanline-overlay" />
       <div className="rift-header">
         <div className="rift-brand">
           <div className="rift-logo-wrap">
