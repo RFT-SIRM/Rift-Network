@@ -41,3 +41,5 @@ jobs:
 
       - name: Run integration tests (Core ↔ Token)
         run: cargo test -p rift-integration-tests
+      - name: Run rift_token tests
+        run: cargo test -p rift_token
