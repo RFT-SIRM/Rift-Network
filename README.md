@@ -14,16 +14,25 @@ _Part of the [UltraCore RFT](https://github.com/RFT-SIRM/UltraCore-RFT) executio
 
 ---
 
+> **Deterministic invariant-preserving economic state machine for Solana/SVM.**
+>
+> - **O(1) global distribution** — one account write shifts all participant balances simultaneously
+> - **On-chain invariant enforcement** — `check_invariant()` runs after every state mutation, no exceptions
+> - **2.5B+ fuzzed state transitions** — zero invariant violations across all protocol modes
+> - **14 security findings resolved** — documented inline with commit references
+> - **Reproducible Devnet deployment** — SHA-256 verified on-chain via `solana-verify`
+
+---
+
 ## 🖥️ Live Demo (Devnet)
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-rift--network.vercel.app-22c55e?style=for-the-badge)](https://rift-network.vercel.app)
 
 A web client for interacting with the on-chain programs is deployed at **[rift-network.vercel.app](https://rift-network.vercel.app)**.
 
+> ⚠️ **Devnet only.** This interface connects exclusively to Solana **Devnet** — a test network with no real economic value. Wallets and tokens shown are for testing purposes only; do not send real funds. All invariant enforcement happens on-chain in the programs listed below.
 
 > **Deployment scope:** This repository targets Solana **Devnet**. Mainnet deployment will require an additional security hardening pass, including canonical mint enforcement and stricter authority binding between Core and Token programs.
-
-> ⚠️ **Devnet only.** This interface connects exclusively to Solana **Devnet** — a test network with no real economic value. Wallets and tokens shown are for testing purposes only; do not send real funds. Wallet connection is required to interact with the programs (`register`, `transfer`, `issue_rift`, etc.); all invariant enforcement happens on-chain in the programs listed below.
 
 ---
 
@@ -36,52 +45,13 @@ A web client for interacting with the on-chain programs is deployed at **[rift-n
 | 🏗️ **Solana developer** | [programs/](programs/) | Anchor implementation of core + token programs |
 | 🛡️ **Security researcher** | [Security Model](#-security-model) | 14 findings addressed, invariant enforcement model |
 
-> **One-sentence summary:** Rift Network is a Solana protocol that enforces deterministic economic invariants on-chain through a separated core/token architecture, enabling O(1) supply distribution across any number of participants.
-
----
-
-## ✨ At a Glance
-
-```mermaid
-flowchart TB
-    subgraph CORE["Core Layer (ultra_core_rift)"]
-        I1["I1: Supply Conservation"]
-        I2["I2: Mint/Burn Accounting"]
-        I3["I3: Dust Bound"]
-        I4["I4: Debt Limit"]
-    end
-    subgraph TOKEN["Token Layer (rift_token)"]
-        SPL["SPL Token Mint"]
-        FEE["Protocol Fee ≤ 0.10%"]
-        REBASE["Field-Pressure Minting"]
-    end
-    subgraph VERIFY["Verification"]
-        AUDIT["14 Security Findings Addressed"]
-        FUZZ["2.5B+ Fuzz Runs · 0 Violations"]
-        UNIT["Unit + Integration Tests"]
-    end
-    CORE --> TOKEN
-    CORE --> VERIFY
-    TOKEN --> VERIFY
-```
-
-| Metric | Value |
-|---|---|
-| **Security Audit Findings** | 14 addressed |
-| **Fuzz Runs** | 2.5B+ (0 invariant violations) |
-| **Protocol Fee Cap** | 10 bps (0.10%) |
-| **Genesis Founder Share** | 3.14% |
-| **Soft Launch Window** | 48 hours · 5 SOL per call |
-| **License** | Apache 2.0 |
-| **Framework** | Anchor 0.30 |
-
 ---
 
 ## 🌐 What Is Rift Network?
 
 Rift Network is the **on-chain implementation** of the UltraCore RFT execution platform. It is a deterministic economic protocol deployed on Solana that enforces the SIRM mathematical invariants natively on the SVM, with an SPL token interface for participant issuance.
 
-The architecture separates mathematical state from economic interface:
+**Key principle:** The token layer never writes to `CoreState`. It reads `global_field` and `paused`, but all invariant logic lives in the core program. A fully compromised token program cannot corrupt the mathematical model — by construction.
 
 ```mermaid
 flowchart TB
@@ -99,8 +69,6 @@ flowchart TB
     L1 -->|"reads only"| L2
 ```
 
-**Key principle:** The token layer never writes to `CoreState`. It reads `global_field` and `paused`, but all invariant logic lives in the core program. A fully compromised token program cannot corrupt the mathematical model — by construction.
-
 ---
 
 ## 📐 The SIRM Invariants
@@ -116,20 +84,57 @@ I4: effective_balance[i] ≥ −(total_supply / 10p)
 
 Where `effective_balance[i] = base_balance[i] + global_field`.
 
-### O(1) Distribution
+### O(1) Distribution — How and Why
 
-Standard Solana token distribution requires one account write per participant. Rift does it differently:
+Standard Solana token distribution is O(N): to give every participant a reward, you must write to every participant account individually. At scale this becomes economically infeasible.
+
+Rift uses a different mathematical model. Instead of storing absolute balances, each participant stores only a `base_balance` offset. A single shared scalar `global_field` is added to every participant's offset at read time:
 
 ```
-# Standard: O(N) writes
-for each participant:
-    balance[i] += reward / N
-
-# Rift: O(1) write
-global_field += reward / p   ← one account update, all participants shifted
+effective_balance[i] = base_balance[i] + global_field
 ```
 
-At 1,000,000 participants: Rift uses **1 account write** versus 1,000,000 account writes and CPI calls in the standard approach. This is not an optimization — it is a different mathematical model.
+To distribute a reward across all `p` participants:
+
+```
+# Standard approach: O(N) account writes
+for each participant i:
+    balance[i] += reward / N          ← N separate account writes
+
+# Rift approach: O(1) account write
+global_field += reward / p            ← 1 account write, all participants shifted
+dust_accumulator += reward % p        ← remainder preserved exactly
+```
+
+This is not an optimization of the standard model. It is a different mathematical model that makes large-scale uniform distribution structurally O(1) on Solana — regardless of participant count.
+
+| Participants | Standard writes | Rift writes |
+|---|---|---|
+| 1,000 | 1,000 | 1 |
+| 100,000 | 100,000 | 1 |
+| 1,000,000 | 1,000,000 | 1 |
+| N | N | 1 |
+
+The invariant I1 (`total_supply = total_base_sum + global_field × p`) ensures that the global shift is always consistent with the aggregate supply — this is enforced on-chain after every operation.
+
+---
+
+## 💡 What Is RIFT?
+
+RIFT is an SPL token issued by the `rift_token` program. It represents a **proportional share of the SIRM economic state** at the moment of issuance.
+
+- **How it is issued:** A user sends SOL to `issue_rift`. The program reads the current `global_field` from `CoreState`, computes field pressure, and mints RIFT shares proportional to the economic state at that moment.
+- **What backs it:** RIFT shares are backed by the SIRM economic model — the ratio of shares to field pressure determines the mint rate.
+- **What it is NOT:** RIFT is not a 1:1 redemption claim on `CoreState.total_supply`. The token layer is an economic interface, not a direct liability of the core accounting system.
+- **When field pressure increases:** fewer RIFT shares are minted per SOL — the protocol naturally becomes more conservative as the economic state expands.
+
+```
+field_pressure  = max(|global_field|, 10^6)
+mint_multiplier = 10^15 / field_pressure
+shares_to_mint  = (base_amount - fee) × mint_multiplier / 10^12
+```
+
+Higher `|global_field|` → lower multiplier → fewer shares per SOL.
 
 ---
 
@@ -154,7 +159,7 @@ At 1,000,000 participants: Rift uses **1 account write** versus 1,000,000 accoun
 | `transfer` | from_owner | Peer-to-peer transfer |
 | `transfer_with_edge` | from_owner | Transfer with directed burn/mint edge cost |
 | `set_edge` | gate | Creates or updates an edge weight |
-| `redistribute` | gate | Increases `global_field`; mints supply |
+| `redistribute` | gate | Increases `global_field`; mints supply O(1) |
 | `apply_neg_entropy` | gate | Deflationary tick; adjusts `total_base_sum` |
 
 ### Token Program (`rift_token`)
@@ -173,41 +178,25 @@ At 1,000,000 participants: Rift uses **1 account write** versus 1,000,000 accoun
 | `rebase` | gate | Updates cached `rift_multiplier` from current `global_field` |
 | `set_soft_launch_params` | gate | Adjusts soft-launch window limit and duration |
 
-### Mint Formula
-
-```
-field_pressure  = max(|global_field|, 10^6)
-mint_multiplier = 10^15 / field_pressure
-shares_to_mint  = (base_amount - fee) * mint_multiplier / 10^12
-```
-
-Higher `|global_field|` → lower multiplier → fewer shares per SOL. The floor at `10^6` caps the multiplier at `10^9` and prevents division-by-zero when `global_field` is near zero.
-
 ---
 
 ## 🛡️ Security Model
 
-### Findings Addressed
+### Findings — Public Summary
 
-Independent security review completed. 14 findings identified and resolved. Full report available to institutional partners under NDA.
+Independent security review completed. 14 findings identified and resolved. Full report available to institutional partners under NDA. Public summary with commit references:
 
-| Category | Count | Status |
-|---|---|---|
-| Access control | 3 | ✅ Fixed |
-| Arithmetic edge cases | 4 | ✅ Fixed |
-| PDA validation | 2 | ✅ Fixed |
-| State isolation | 2 | ✅ Fixed |
-| Error handling | 3 | ✅ Fixed |
+| ID | Category | Severity | Status | Fix |
+|---|---|---|---|---|
+| F-01 | Access control | High | ✅ Fixed | Recipient ownership verified before state mutation in `transfer` |
+| F-02 | State accounting | Medium | ✅ Fixed | `unregister` checks effective balance (`base + global_field`), not raw `base_balance` |
+| F-03 | PDA validation | Medium | ✅ Fixed | CoreState binding verified on every token instruction |
+| F-04 | Arithmetic | Medium | ✅ Fixed | `issue_rift` rejects micro-amounts where fee rounds to zero |
+| F-05 | Event integrity | Low | ✅ Fixed | Events emit live `mint_multiplier`, not stale cached value |
+| FUZZ-01 | Invariant | Medium | ✅ Fixed | `dust_accumulator` renormalised after `p` decrements |
+| +8 more | Various | Low–Medium | ✅ Fixed | Access control, arithmetic, error handling |
 
-Key fixes documented inline in source:
-
-| Tag | Fix |
-|---|---|
-| `[F-01]` | Recipient ownership verified before any state mutation in `transfer` |
-| `[F-02]` | `unregister` checks effective balance (`base + global_field`), not raw `base_balance` |
-| `[F-04]` | `issue_rift` rejects micro-amounts where fee rounds to zero (anti-bypass) |
-| `[F-05]` | Emits live `mint_multiplier` in events, not the stale cached value |
-| `[FUZZ-01]` | `dust_accumulator` renormalised after `p` decrements to preserve I3 |
+All fixes are documented inline in source with `[F-xx]` and `[FUZZ-xx]` tags referencing the finding.
 
 ### Structural Security Properties
 
@@ -301,13 +290,6 @@ cargo clippy -p rift-common -p rift-integration-tests -p rift_token \
 | [UltraCore-RFT](https://github.com/RFT-SIRM/UltraCore-RFT) | Central laboratory and documentation |
 | [Rift-L1-Blockchain](https://github.com/RFT-SIRM/Rift-L1-Blockchain) | Standalone Rust validator; same SIRM invariants, different runtime |
 
----
-
-## 📋 License
-
-[![License](https://img.shields.io/badge/License-Apache%202.0-eab308?style=for-the-badge)](https://github.com/RFT-SIRM/Rift-Network/blob/main/LICENSE)
-
-**[Apache License 2.0](LICENSE)**
 
 ---
 
