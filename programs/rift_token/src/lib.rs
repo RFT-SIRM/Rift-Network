@@ -518,22 +518,39 @@ mod tests {
     fn compute_shares(base_amount: u64, fee_bps: u16, global_field: i128) -> Result<u64> {
         require!(fee_bps <= MAX_FEE_BPS, TokenError::FeeTooHigh);
         let fee = (base_amount as u128)
-            .checked_mul(fee_bps as u128).ok_or(TokenError::MathOverflow)?
-            .checked_div(10_000).ok_or(TokenError::MathOverflow)? as u64;
-        if fee_bps > 0 { require!(fee > 0, TokenError::AmountTooSmall); }
-        let after_fee = base_amount.checked_sub(fee).ok_or(TokenError::MathOverflow)?;
+            .checked_mul(fee_bps as u128)
+            .ok_or(TokenError::MathOverflow)?
+            .checked_div(10_000)
+            .ok_or(TokenError::MathOverflow)? as u64;
+        if fee_bps > 0 {
+            require!(fee > 0, TokenError::AmountTooSmall);
+        }
+        let after_fee = base_amount
+            .checked_sub(fee)
+            .ok_or(TokenError::MathOverflow)?;
         let pressure = global_field.unsigned_abs().max(MIN_FIELD_PRESSURE);
-        let mult = 1_000_000_000_000_000u128.checked_div(pressure).unwrap_or(1_000_000_000_000u128);
-        let shares = (after_fee as u128).checked_mul(mult).ok_or(TokenError::MathOverflow)?
-            .checked_div(1_000_000_000_000u128).ok_or(TokenError::MathOverflow)?;
+        let mult = 1_000_000_000_000_000u128
+            .checked_div(pressure)
+            .unwrap_or(1_000_000_000_000u128);
+        let shares = (after_fee as u128)
+            .checked_mul(mult)
+            .ok_or(TokenError::MathOverflow)?
+            .checked_div(1_000_000_000_000u128)
+            .ok_or(TokenError::MathOverflow)?;
         require!(shares > 0, TokenError::ZeroSharesMinted);
-        shares.try_into().map_err(|_| TokenError::MathOverflow.into())
+        shares
+            .try_into()
+            .map_err(|_| TokenError::MathOverflow.into())
     }
 
     #[test]
     fn test_zero_fee() {
         let s = compute_shares(1_000_000_000, 0, 1_000_000).unwrap();
-        assert_eq!(s, 1_000_000_000_000_000u128.checked_div(1_000_000).unwrap() as u64 * 1_000_000_000 / 1_000_000_000_000);
+        assert_eq!(
+            s,
+            1_000_000_000_000_000u128.checked_div(1_000_000).unwrap() as u64 * 1_000_000_000
+                / 1_000_000_000_000
+        );
     }
 
     #[test]
@@ -560,7 +577,7 @@ mod tests {
 
     #[test]
     fn test_high_field_fewer_shares() {
-        let s_low  = compute_shares(1_000_000_000, 0, 1_000_000).unwrap();
+        let s_low = compute_shares(1_000_000_000, 0, 1_000_000).unwrap();
         let s_high = compute_shares(1_000_000_000, 0, 1_000_000_000).unwrap();
         assert!(s_low > s_high);
     }
