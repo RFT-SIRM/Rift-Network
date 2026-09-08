@@ -20,6 +20,9 @@ _Part of the [UltraCore RFT](https://github.com/RFT-SIRM/UltraCore-RFT) executio
 
 A web client for interacting with the on-chain programs is deployed at **[rift-network.vercel.app](https://rift-network.vercel.app)**.
 
+
+> **Deployment scope:** This repository targets Solana **Devnet**. Mainnet deployment will require an additional security hardening pass, including canonical mint enforcement and stricter authority binding between Core and Token programs.
+
 > ⚠️ **Devnet only.** This interface connects exclusively to Solana **Devnet** — a test network with no real economic value. Wallets and tokens shown are for testing purposes only; do not send real funds. Wallet connection is required to interact with the programs (`register`, `transfer`, `issue_rift`, etc.); all invariant enforcement happens on-chain in the programs listed below.
 
 ---
