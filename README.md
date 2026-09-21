@@ -1,8 +1,6 @@
 # Rift Network
 
 <!-- license-banner:start -->
-[![License: Proprietary](https://img.shields.io/badge/license-Proprietary%20%E2%80%94%20All%20Rights%20Reserved-critical)](LICENSE) [![Source available](https://img.shields.io/badge/source-available%20for%20viewing%20only-lightgrey)](LICENSE)
-
 > **⚠️ License notice: source-available, NOT open source.**
 > Copyright © 2026 RFT-SIRM. All rights reserved. This code is published for reading and security review only. You may not use, run, deploy, copy, modify, or distribute it, or build on it, without prior written permission. There is no conversion to an open-source license. See [LICENSE](LICENSE) and [NOTICE](NOTICE).
 <!-- license-banner:end -->
@@ -13,7 +11,7 @@
 [![Anchor](https://img.shields.io/badge/Framework-Anchor-0ea5e9?style=for-the-badge)](https://www.anchor-lang.com)
 [![Security](https://img.shields.io/badge/Security-14%20Findings%20Addressed-22c55e?style=for-the-badge)](https://github.com/RFT-SIRM/Rift-Network#-security-model)
 [![Fuzzing](https://img.shields.io/badge/Fuzzing-2.5B%2B%20Runs-10b981?style=for-the-badge)](https://github.com/RFT-SIRM/Rift-Network#-verification)
-[![License](https://img.shields.io/badge/License-Apache%202.0-eab308?style=for-the-badge)](https://github.com/RFT-SIRM/Rift-Network/blob/main/LICENSE)
+[![License](https://img.shields.io/badge/License-Proprietary%20%E2%80%94%20All%20Rights%20Reserved-red?style=for-the-badge)](LICENSE) [![Source](https://img.shields.io/badge/Source-Available%20%E2%80%94%20View%20Only-lightgrey?style=for-the-badge)](LICENSE)
 
 **Solana On-Chain Protocol · SIRM Invariant Enforcement · SPL Token Layer**
 
