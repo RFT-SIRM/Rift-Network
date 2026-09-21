@@ -1,5 +1,12 @@
 # Rift Network
 
+<!-- license-banner:start -->
+[![License: Proprietary](https://img.shields.io/badge/license-Proprietary%20%E2%80%94%20All%20Rights%20Reserved-critical)](LICENSE) [![Source available](https://img.shields.io/badge/source-available%20for%20viewing%20only-lightgrey)](LICENSE)
+
+> **⚠️ License notice: source-available, NOT open source.**
+> Copyright © 2026 RFT-SIRM. All rights reserved. This code is published for reading and security review only. You may not use, run, deploy, copy, modify, or distribute it, or build on it, without prior written permission. There is no conversion to an open-source license. See [LICENSE](LICENSE) and [NOTICE](NOTICE).
+<!-- license-banner:end -->
+
 [![Lab](https://img.shields.io/badge/Lab-Research%20Platform-dc2626?style=for-the-badge)](https://github.com/RFT-SIRM/UltraCore-RFT)
 [![Solana](https://img.shields.io/badge/Chain-Solana-9945ff?style=for-the-badge)](https://solana.com)
 [![SPL](https://img.shields.io/badge/Protocol-SPL%20Token-3b82f6?style=for-the-badge)](https://spl.solana.com)
@@ -296,3 +303,9 @@ cargo clippy -p rift-common -p rift-integration-tests -p rift_token \
 **Built in Rust · Verified by Mathematics · Zero Compromises**
 
 _Part of the UltraCore RFT Execution Platform · © 2026 Eugeny (RFT-SIRM)_
+
+## License
+
+Rift-Network is licensed under the **Rift-Network Proprietary Source-Available License, Version 1.0**. Copyright © 2026 RFT-SIRM. All rights reserved.
+
+The source code is visible for reading and security review only. Using, compiling, running, deploying, copying, modifying, or distributing it requires prior written permission from RFT-SIRM. There is no Change Date and no conversion to an open-source license. See [LICENSE](LICENSE) and [NOTICE](NOTICE) for the full terms.

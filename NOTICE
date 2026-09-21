@@ -1,11 +1,30 @@
+Rift-Network
+Copyright (c) 2026 RFT-SIRM. All rights reserved.
+
 Rift-Network is an original research and engineering project of RFT-SIRM.
 
-The architecture, economic model, name, branding, and design of Rift-Network are the intellectual property of RFT-SIRM.
+The architecture, economic model, name, branding, and design of Rift-Network
+are the intellectual property of RFT-SIRM.
 
-The source code is provided for study, audit, and evaluation.
+This repository is source-available, not open source. The source code is
+published for reading and security review only, under the Rift-Network
+Proprietary Source-Available License, Version 1.0 (see LICENSE).
 
-Public availability of this source code does not grant rights to:
-- use the Rift-Network name, logo, branding, or trademarks;
-- operate public networks or production services;
-- deploy commercial products, tokens, or derivative protocols;
-- create or market derivative networks without express written authorization from RFT-SIRM.
+Public availability of this source code does not grant any right to:
+
+- use, compile, run, test, or deploy the code on any blockchain network
+  (mainnet, testnet, devnet, or local);
+
+- copy, modify, fork for use, distribute, or create derivative works;
+
+- use the Rift-Network or RFT-SIRM name, logo, branding, or trademarks;
+
+- operate networks, products, or services, or issue tokens, based on this
+  code.
+
+There is no Change Date and no conversion to an open-source license.
+
+Any use beyond reading requires prior written permission from RFT-SIRM.
+
+Third-party dependencies (Anchor, Solana SDK, and others) remain under their
+own licenses.

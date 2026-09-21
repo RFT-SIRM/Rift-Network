@@ -380,3 +380,7 @@ A permissionless instruction that allows a trusted oracle to increment `global_f
 UltraCore Rift v1.0 RC is a deterministic, invariant-enforced supply distribution protocol. The core mathematical model is implemented without floating-point arithmetic; all operations use 128-bit integer arithmetic with explicit overflow checks. The token layer is a thin issuance interface that reads but never modifies core state.
 
 The primary engineering risk at this stage is operational centralization: the gate keypair is the single authority for all privileged operations. This is a known and documented limitation, not a code defect. The on-chain arithmetic and invariant enforcement are ready for external technical review.
+
+---
+
+Copyright © 2026 RFT-SIRM. All rights reserved. See [LICENSE](LICENSE).

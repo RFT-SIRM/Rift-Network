@@ -1,9 +1,10 @@
 [workspace]
 
 [package]
+license-file = "../LICENSE"
+publish = false
 name = "ultra_core_rift-fuzz"
 version = "0.0.0"
-publish = false
 edition = "2021"
 
 [package.metadata]

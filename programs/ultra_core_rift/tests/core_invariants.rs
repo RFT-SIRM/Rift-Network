@@ -87,3 +87,6 @@ fn unregister_participant_burns_balance_and_preserves_invariant() {
     assert_eq!(state.total_burned, 5);
     assert!(state.check_invariant().is_ok());
 }
+
+// SPDX-License-Identifier: LicenseRef-Rift-Proprietary-1.0
+// Copyright (c) 2026 RFT-SIRM. All rights reserved. See LICENSE.

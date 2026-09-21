@@ -828,3 +828,6 @@ pub struct MintEvent {
 pub struct PausedEvent {
     pub paused: bool,
 }
+
+// SPDX-License-Identifier: LicenseRef-Rift-Proprietary-1.0
+// Copyright (c) 2026 RFT-SIRM. All rights reserved. See LICENSE.

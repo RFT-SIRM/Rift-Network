@@ -136,3 +136,6 @@ fn token_layer_adapts_to_core_state_evolution() {
     assert!(m2 < m1, "m1={}, m2={}", m1, m2);
     assert!(s2 < s1, "s1={}, s2={}", s1, s2);
 }
+
+// SPDX-License-Identifier: LicenseRef-Rift-Proprietary-1.0
+// Copyright (c) 2026 RFT-SIRM. All rights reserved. See LICENSE.
